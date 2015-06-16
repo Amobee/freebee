@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<!--
+
+  Checkstyle is very configurable. Be sure to read the documentation at
+  http://checkstyle.sf.net (or in your downloaded distribution).
+
+  Most Checks are configurable, be sure to consult the documentation.
+
+  To completely disable a check, just comment it out or delete it from the file.
+
+  Finally, it is worth reading the documentation.
+
+-->
+
+
+
+<module name="Checker">
+
+    <module name="SuppressWarningsFilter"/>
+
+	<module name="SuppressionFilter">
+    	<property name="file" value="checkstyle-suppressions.xml"/>
+	</module>
+
+    <!--
+        If you set the basedir property below, then all reported file
+        names will be relative to the specified directory. See
+        http://checkstyle.sourceforge.net/5.x/config.html#Checker
+
+        <property name="basedir" value="${basedir}"/>
+    -->
+
+    <module name="TreeWalker">
+
+        <module name="SuppressWarningsHolder" />
+
+        <module name="Regexp">
+            <property name="format" value="org\.apache\.commons\.lang\."/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not be using org.apache.commons.lang, you should use org.apache.commons.lang3 instead"/>
+        </module>
+
+        <!-- Block Checks -->
+        <module name="EmptyBlock">
+            <property name="tokens" value="LITERAL_DO,
+                LITERAL_ELSE,
+                LITERAL_FINALLY,
+                LITERAL_IF,
+                LITERAL_FOR,
+                LITERAL_TRY,
+                LITERAL_WHILE,
+                INSTANCE_INIT,
+                STATIC_INIT"/>
+        </module>
+        <module name="NeedBraces"/>
+        <module name="AvoidNestedBlocks"/>
+
+        <!-- Enforce braces on newlines everywhere except for lambdas -->
+        <module name="LeftCurly">
+            <property name="option" value="nl"/>
+            <property name="tokens" value="INTERFACE_DEF, CLASS_DEF, ANNOTATION_DEF, ENUM_DEF, CTOR_DEF,
+             METHOD_DEF, ENUM_CONSTANT_DEF, LITERAL_WHILE, LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY,
+             LITERAL_SYNCHRONIZED, LITERAL_SWITCH, LITERAL_DO, LITERAL_IF, LITERAL_ELSE, LITERAL_FOR,
+             STATIC_INIT, OBJBLOCK"/>
+        </module>
+
+
+        <!-- Class Design -->
+        <module name="VisibilityModifier">
+            <property name="protectedAllowed" value="true"/>
+        </module>
+        <!--module name="FinalClass"/-->
+        <module name="HideUtilityClassConstructor"/>
+        <module name="InnerTypeLast"/>
+
+        <!-- Coding -->
+        <module name="CovariantEquals"/>
+        <module name="EmptyStatement"/>
+        <module name="EqualsAvoidNull"/>
+        <module name="EqualsHashCode"/>
+        <module name="FinalLocalVariable"/>
+        <module name="HiddenField">
+            <property name="tokens" value="VARIABLE_DEF"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreAbstractMethods" value="true"/>
+        </module>
+        <module name="IllegalInstantiation">
+            <property name="classes" value="java.lang.Boolean"/>
+        </module>
+        <module name="InnerAssignment"/>
+        <module name="IllegalTypeCheck">
+            <property name="illegalClassNames" value="java.util.ArrayList,
+                                                      java.util.EnumMap,
+                                                      java.util.EnumSet,
+                                                      java.util.HashSet,
+                                                      java.util.HashMap,
+                                                      java.util.LinkedHashMap,
+                                                      java.util.LinkedHashSet,
+                                                      java.util.LinkedList,
+                                                      java.util.TreeSet,
+                                                      java.util.TreeMap,
+                                                      java.util.Vector,
+                                                      java.util.WeakHashMap"/>
+        </module>
+        
+        <!--module name="MagicNumber"/-->
+        <module name="MissingSwitchDefault"/>
+        <module name="ModifiedControlVariable"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+        <module name="StringLiteralEquality"/>
+        <module name="NoFinalizer"/>
+        <module name="PackageDeclaration"/>
+        <module name="ReturnCount"/>
+        <!--module name="DeclarationOrder"/-->
+        <module name="ExplicitInitialization"/>
+        <module name="DefaultComesLast"/>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="RequireThis">
+            <property name="checkMethods" value="false"/>
+            <property name="validateOnlyOverlapping" value="false"/>
+        </module>
+        <module name="UnnecessaryParentheses"/>
+        <module name="OneStatementPerLine"/>
+
+
+        <!-- Imports -->
+        <module name="AvoidStarImport">
+		   <property name="allowStaticMemberImports" value="true"/>
+		</module>
+        <module name="IllegalImport">
+            <property name="illegalPkgs" value="sun, org.easymock, gnu.trove"/>
+        </module>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports">
+        	<property name="processJavadoc" value="false"/>
+        </module>
+
+
+        <!-- Miscellaneous -->
+        <module name="UpperEll"/>
+        <module name="ArrayTypeStyle"/>
+        <module name="FinalParameters"/>
+        <module name="Regexp">
+            <property name="format" value="System\.out\.println"/>
+            <property name="illegalPattern" value="true"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="OuterTypeFilename"/>
+
+
+        <!-- Modifiers -->
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+
+
+        <!-- Whitespace -->
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad">
+            <property name="allowLineBreaks" value="true"/>
+        </module>
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="DOT"/>
+            <property name="allowLineBreaks" value="false"/>
+        </module>
+        <module name="ParenPad"/>
+
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+        </module>
+        <module name="CommentsIndentation"/>
+
+    </module>
+
+    <module name="FileTabCharacter">
+        <property name="fileExtensions" value=".java"/>
+    </module>
+
+</module>

@@ -48,7 +48,7 @@ public class BEConjunctionNode extends BENode
             @JsonProperty(value = "negative") final boolean negative,
             @JsonProperty(value = "values", required = true) @Nonnull final List<BENode> values)
     {
-        this(id, BEConjunctionType.valueOf(type.toUpperCase()), values);
+        this(id, BEConjunctionType.valueOf(type.toUpperCase()), negative, values);
     }
 
     public BEConjunctionNode(

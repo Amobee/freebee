@@ -6,6 +6,8 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -30,6 +32,7 @@ public class BooleanExpressionTest
 
         assertEquals(expected, serializedExpression);
     }
+
 
     @Test
     public void testDeserializeTwoLevels() throws Exception
@@ -101,6 +104,45 @@ public class BooleanExpressionTest
         final BEReferenceNode expression = new BEReferenceNode(Lists.newArrayList("test"));
         final BENode mapped = this.mapper.readValue(
                 "{\"type\":\"ref\",\"values\":[{\"id\":\"test\"}]}",
+                BENode.class);
+        assertEquals(expression, mapped);
+    }
+
+    // New Tests
+
+    @Test
+    public void testDeserializeNegativeConjunction() throws Exception
+    {
+
+        final BEConjunctionNode expression = new BEConjunctionNode(
+                "negativeConjunction",
+                BEConjunctionType.AND,
+                true,
+                new ArrayList<>());
+
+        expression.addValue(new BEPredicateNode("gender", "M", "F"));
+        expression.addValue(new BEPredicateNode("age", "18-24", "25-34"));
+
+        final BENode mapped = this.mapper.readValue(
+                "{\"id\": \"negativeConjunction\", \"type\": \"and\", \"negative\": true, \"values\": [{\"type\": \"gender\", \"values\": [{\"id\": \"M\"}, {\"id\": \"F\"}]}, {\"type\": \"age\", \"values\": [{\"id\": \"18-24\"}, {\"id\": \"25-34\"}]}]}",
+                BENode.class);
+        assertEquals(expression, mapped);
+    }
+
+    @Test
+    public void testDeserializeNegativeFalseConjunction() throws Exception
+    {
+        final BEConjunctionNode expression = new BEConjunctionNode(
+                "negativeConjunction",
+                BEConjunctionType.AND,
+                false,
+                new ArrayList<>());
+
+        expression.addValue(new BEPredicateNode("gender", "M", "F"));
+        expression.addValue(new BEPredicateNode("age", "18-24", "25-34"));
+
+        final BENode mapped = this.mapper.readValue(
+                "{\"id\": \"negativeConjunction\", \"type\": \"and\", \"values\": [{\"type\": \"gender\", \"values\": [{\"id\": \"M\"}, {\"id\": \"F\"}]}, {\"type\": \"age\", \"values\": [{\"id\": \"18-24\"}, {\"id\": \"25-34\"}]}]}",
                 BENode.class);
         assertEquals(expression, mapped);
     }

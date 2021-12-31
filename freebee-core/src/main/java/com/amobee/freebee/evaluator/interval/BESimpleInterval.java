@@ -54,7 +54,7 @@ final class BESimpleInterval implements Interval, Serializable
     @Override
     public String toString()
     {
-        return "BESimpleInterval[" + start + "," + end + ')';
+        return "BESimpleInterval[" + this.start + "," + this.end + ')';
     }
 
     @Override

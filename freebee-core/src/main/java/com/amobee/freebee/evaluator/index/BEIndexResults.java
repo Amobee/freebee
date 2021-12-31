@@ -4,7 +4,9 @@ import com.amobee.freebee.evaluator.BEInterval;
 
 import java.util.Collection;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
+import com.amobee.freebee.evaluator.evaluator.BEInputAttributeCategory;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
@@ -35,10 +37,15 @@ public class BEIndexResults
 
     public void addInterval(@Nonnull final BEInterval interval)
     {
+        addInterval(interval, null);
+    }
+
+    public void addInterval(@Nonnull final BEInterval interval, @Nullable final BEInputAttributeCategory matchedInputValue)
+    {
         final int exprId = interval.getExpressionId();
         this.indexExpressionResults
                 .getIfAbsentPut(exprId, createExpressionIndexResultBuilder(exprId))
-                .addInterval(interval);
+                .addInterval(interval, matchedInputValue);
     }
 
     private BEIndexExpressionResult createExpressionIndexResultBuilder(final int expressionId)

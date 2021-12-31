@@ -81,6 +81,14 @@ public class BECompositeEvaluator<T> implements BEEvaluator<T>
         return matchedResults;
     }
 
+    @Nonnull
+    @Override
+    public BEEvaluatorResult<T> evaluateAndTrack(@Nonnull final BEInput input)
+    {
+        throw new UnsupportedOperationException(
+                "This feature is not yet supported by the BECompositeEvaluator.");
+    }
+
     @Override
     public boolean equals(final Object o)
     {

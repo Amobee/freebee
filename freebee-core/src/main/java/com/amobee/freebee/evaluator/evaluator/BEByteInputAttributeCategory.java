@@ -1,29 +1,40 @@
 package com.amobee.freebee.evaluator.evaluator;
 
-import java.util.List;
-import java.util.function.Consumer;
-import javax.annotation.Nonnull;
-
 import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.index.BEAttributeCategoryMatchedIntervalConsumer;
 import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
 import com.google.common.annotations.VisibleForTesting;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.eclipse.collections.api.list.primitive.ImmutableByteList;
 import org.eclipse.collections.api.list.primitive.MutableByteList;
 import org.eclipse.collections.impl.list.mutable.primitive.ByteArrayList;
 
+import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
 /**
  * @author Michael Bond
  */
 @ToString
-@NoArgsConstructor
-public class BEByteInputAttributeCategory implements BEInputAttributeCategory
+public class BEByteInputAttributeCategory extends BEBaseInputAttributeCategory
 {
     private final MutableByteList values = new ByteArrayList();
 
+    public BEByteInputAttributeCategory(@Nonnull final String attributeCategoryName)
+    {
+        super(attributeCategoryName);
+    }
+
+    public BEByteInputAttributeCategory(@Nonnull final String attributeCategoryName, final boolean trackingEnabled)
+    {
+        super(attributeCategoryName, trackingEnabled);
+    }
+
     private BEByteInputAttributeCategory(@Nonnull final BEByteInputAttributeCategory category)
     {
+        super(category.getName(), category.isTrackingEnabled());
         this.values.addAll(category.values);
     }
 
@@ -41,14 +52,67 @@ public class BEByteInputAttributeCategory implements BEInputAttributeCategory
     }
 
     @Override
+    public void forEachMatchedInterval(
+            @Nonnull final BEIndexAttributeCategory indexAttributeCategory,
+            @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        this.values.forEach(value -> {
+            BEByteInputAttributeCategory matchedInput = null;
+            if (this.isTrackingEnabled())
+            {
+                matchedInput = new BEByteInputAttributeCategory(this.getName(), true);
+                matchedInput.add(value);
+            }
+            indexAttributeCategory.getIntervals(value, matchedInput, consumer);
+        });
+    }
+
+    @Override
     public BEByteInputAttributeCategory clone()
     {
         return new BEByteInputAttributeCategory(this);
+    }
+
+    @Override
+    public <C extends BEInputAttributeCategory> void addAll(final C other)
+    {
+        if (!(other instanceof BEByteInputAttributeCategory))
+        {
+            throw new IllegalArgumentException("Expected "
+                    + BEByteInputAttributeCategory.class.getSimpleName()
+                    + " but was passed " + other.getClass().getSimpleName());
+        }
+        this.values.addAll(((BEByteInputAttributeCategory) other).values);
     }
 
     @VisibleForTesting
     public ImmutableByteList getValues()
     {
         return this.values.toImmutable();
+    }
+
+    @Override
+    public boolean equals(final Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        if (!super.equals(o))
+        {
+            return false;
+        }
+        final BEByteInputAttributeCategory that = (BEByteInputAttributeCategory) o;
+        return Objects.equals(this.values, that.values);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(super.hashCode(), this.values);
     }
 }

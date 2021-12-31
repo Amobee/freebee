@@ -2,10 +2,10 @@ package com.amobee.freebee.evaluator.evaluator;
 
 import com.amobee.freebee.evaluator.index.BEIndexMetrics;
 
-import java.io.Serializable;
-import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.Set;
 
 /**
  * An interface for a free-form boolean expression evaluator.
@@ -26,6 +26,19 @@ public interface BEEvaluator<T> extends Serializable
      */
     @Nonnull
     Set<T> evaluate(@Nonnull BEInput input);
+
+    /**
+     * Evaluate expressions agains a given input, while tracking which input values
+     * are used to satisfy each expression.
+     *
+     * The result object stores both matched expressions and metadata about which
+     * input attribute values contributed to satisfying each matched expression.
+     *
+     * @return BEEvaluatorResult wrapper object for matched expressions that can
+     * be queried to lookup which input values contributed to the match
+     */
+    @Nonnull
+    BEEvaluatorResult<T> evaluateAndTrack(@Nonnull BEInput input);
 
     /**
      * Get summary metrics for the BEIndex that backs the evaluator.

@@ -21,7 +21,7 @@ public class BEInput implements Cloneable
     private BEInput(@Nonnull final BEInput beInput)
     {
         this.attributeCategories
-            .putAll(beInput.attributeCategories.collectValues((key, category) -> category.clone()));
+                .putAll(beInput.attributeCategories.collectValues((key, category) -> category.clone()));
     }
 
     @Nullable
@@ -40,7 +40,7 @@ public class BEInput implements Cloneable
     @Nonnull
     public BEByteInputAttributeCategory getOrCreateByteCategory(@Nonnull final String attributeCategory)
     {
-        return (BEByteInputAttributeCategory) this.attributeCategories.getIfAbsentPut(
+        return (BEByteInputAttributeCategory) this.attributeCategories.getIfAbsentPutWithKey(
                 attributeCategory.toUpperCase(),
                 BEByteInputAttributeCategory::new);
     }
@@ -55,7 +55,7 @@ public class BEInput implements Cloneable
     @Nonnull
     public BEDoubleInputAttributeCategory getOrCreateDoubleCategory(@Nonnull final String attributeCategory)
     {
-        return (BEDoubleInputAttributeCategory) this.attributeCategories.getIfAbsentPut(
+        return (BEDoubleInputAttributeCategory) this.attributeCategories.getIfAbsentPutWithKey(
                 attributeCategory.toUpperCase(),
                 BEDoubleInputAttributeCategory::new);
     }
@@ -70,7 +70,7 @@ public class BEInput implements Cloneable
     @Nonnull
     public BEIntInputAttributeCategory getOrCreateIntCategory(@Nonnull final String attributeCategory)
     {
-        return (BEIntInputAttributeCategory) this.attributeCategories.getIfAbsentPut(
+        return (BEIntInputAttributeCategory) this.attributeCategories.getIfAbsentPutWithKey(
                 attributeCategory.toUpperCase(),
                 BEIntInputAttributeCategory::new);
     }
@@ -85,7 +85,7 @@ public class BEInput implements Cloneable
     @Nonnull
     public BELongInputAttributeCategory getOrCreateLongCategory(@Nonnull final String attributeCategory)
     {
-        return (BELongInputAttributeCategory) this.attributeCategories.getIfAbsentPut(
+        return (BELongInputAttributeCategory) this.attributeCategories.getIfAbsentPutWithKey(
                 attributeCategory.toUpperCase(),
                 BELongInputAttributeCategory::new);
     }
@@ -100,7 +100,7 @@ public class BEInput implements Cloneable
     @Nonnull
     public BEStringInputAttributeCategory getOrCreateStringCategory(@Nonnull final String attributeCategory)
     {
-        return (BEStringInputAttributeCategory) this.attributeCategories.getIfAbsentPut(
+        return (BEStringInputAttributeCategory) this.attributeCategories.getIfAbsentPutWithKey(
                 attributeCategory.toUpperCase(),
                 BEStringInputAttributeCategory::new);
     }

@@ -4,6 +4,9 @@ import com.amobee.freebee.ExpressionUtil;
 import com.amobee.freebee.config.BEDataTypeConfig;
 import com.amobee.freebee.expression.BENode;
 import com.amobee.freebee.expression.BEPredicateNode;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,15 +19,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Michael Bond
  */
+@SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class BEEvaluatorTest
 {
     private static final String DATA_TYPE_CONFIG = "[" +
@@ -94,40 +100,79 @@ public class BEEvaluatorTest
         final BEEvaluator<String> evaluator = builder.build();
 
         BEInput input;
-        Set<String> result;
+        BEEvaluatorResult<String> result;
+        Set<String> matchedExpressions;
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("gender").add("M"); // match
 
-        result = evaluator.evaluate(input);
-        assertEquals(4, result.size());
-        assertTrue("G1", result.contains("G1"));
-        assertTrue("AR1", result.contains("AR1"));
-        assertTrue("G1 and AR1", result.contains("G1 and AR1"));
-        assertTrue("G1 or AR1", result.contains("G1 or AR1"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(4, matchedExpressions.size());
+        assertTrue("G1", matchedExpressions.contains("G1"));
+        assertTrue("AR1", matchedExpressions.contains("AR1"));
+        assertTrue("G1 and AR1", matchedExpressions.contains("G1 and AR1"));
+        assertTrue("G1 or AR1", matchedExpressions.contains("G1 or AR1"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1"))
+                .containsExactly(singletonList(input.getCategory("gender")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR1"))
+                .containsExactly(singletonList(input.getCategory("age")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1 and AR1")).containsExactly(
+                asList(input.getCategory("gender"), input.getCategory("age")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1 or AR1")).containsExactly(
+                singletonList(input.getCategory("gender")),
+                singletonList(input.getCategory("age")));
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("15"); // no match
         input.getOrCreateStringCategory("gender").add("M"); // match
 
-        result = evaluator.evaluate(input);
-        assertEquals(2, result.size());
-        assertTrue("G1", result.contains("G1"));
-        assertFalse("AR1", result.contains("AR1"));
-        assertFalse("G1 and AR1", result.contains("G1 and AR1"));
-        assertTrue("G1 or AR1", result.contains("G1 or AR1"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(2, matchedExpressions.size());
+        assertTrue("G1", matchedExpressions.contains("G1"));
+        assertFalse("AR1", matchedExpressions.contains("AR1"));
+        assertFalse("G1 and AR1", matchedExpressions.contains("G1 and AR1"));
+        assertTrue("G1 or AR1", matchedExpressions.contains("G1 or AR1"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1"))
+                .containsExactly(singletonList(input.getCategory("gender")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1 or AR1"))
+                .containsExactly(singletonList(input.getCategory("gender")));
+
+        input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("age").add("20"); // match
+        input.getOrCreateStringCategory("gender").add("F"); // no match
+
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(2, matchedExpressions.size());
+        assertFalse("G1", matchedExpressions.contains("G1"));
+        assertTrue("AR1", matchedExpressions.contains("AR1"));
+        assertFalse("G1 and AR1", matchedExpressions.contains("G1 and AR1"));
+        assertTrue("G1 or AR1", matchedExpressions.contains("G1 or AR1"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR1"))
+                .containsExactly(singletonList(input.getCategory("age")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("G1 or AR1"))
+                .containsExactly(singletonList(input.getCategory("age")));
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").add("15"); // no match
         input.getOrCreateStringCategory("gender").add("F"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
-        assertFalse("G1", result.contains("G1"));
-        assertFalse("AR1", result.contains("AR1"));
-        assertFalse("G1 and AR1", result.contains("G1 and AR1"));
-        assertFalse("G1 or AR1", result.contains("G1 or AR1"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(0, matchedExpressions.size());
+        assertFalse("G1", matchedExpressions.contains("G1"));
+        assertFalse("AR1", matchedExpressions.contains("AR1"));
+        assertFalse("G1 and AR1", matchedExpressions.contains("G1 and AR1"));
+        assertFalse("G1 or AR1", matchedExpressions.contains("G1 or AR1"));
     }
 
     @Test // multiple elements in expressions, and, or
@@ -143,107 +188,168 @@ public class BEEvaluatorTest
         final BEEvaluator<String> evaluator = builder.build();
 
         BEInput input;
-        Set<String> result;
+        BEEvaluatorResult<String> result;
+        Set<String> matchedExpressions;
 
         // single values in record
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("domain").add("gooddomain.com"); // match
+        input.getOrCreateStringCategory("domain").add("irrelevant.com"); // irrelevant
 
-        result = evaluator.evaluate(input);
-        assertEquals(4, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertTrue("D2", result.contains("D2"));
-        assertTrue("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(4, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertTrue("D2", matchedExpressions.contains("D2"));
+        assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
+                .containsExactly(singletonList(input("domain", "gooddomain.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com")));
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
+        input.getOrCreateStringCategory("domain").add("irrelevant.com"); // irrelevant
 
-        result = evaluator.evaluate(input);
-        assertEquals(2, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertFalse("D2", result.contains("D2"));
-        assertFalse("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(2, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertFalse("D2", matchedExpressions.contains("D2"));
+        assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("50"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
-        assertFalse("AR2", result.contains("AR2"));
-        assertFalse("D2", result.contains("D2"));
-        assertFalse("AR2 and D2", result.contains("AR2 and D2"));
-        assertFalse("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(0, matchedExpressions.size());
+        assertFalse("AR2", matchedExpressions.contains("AR2"));
+        assertFalse("D2", matchedExpressions.contains("D2"));
+        assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertFalse("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
 
         // multiple values in record
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("age").add("52"); // match
         input.getOrCreateStringCategory("domain").add("gooddomain.com"); // match
         input.getOrCreateStringCategory("domain").add("gooddomain2.com"); // match
+        input.getOrCreateStringCategory("domain").add("irrelevant.com"); // irrelevant
 
-        result = evaluator.evaluate(input);
-        assertEquals(4, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertTrue("D2", result.contains("D2"));
-        assertTrue("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(4, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertTrue("D2", matchedExpressions.contains("D2"));
+        assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
+                .containsExactly(singletonList(input("domain", "gooddomain.com", "gooddomain2.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com", "gooddomain2.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com", "gooddomain2.com")));
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("age").add("45"); // no match
         input.getOrCreateStringCategory("domain").add("gooddomain.com"); // match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(4, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertTrue("D2", result.contains("D2"));
-        assertTrue("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(4, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertTrue("D2", matchedExpressions.contains("D2"));
+        assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
+                .containsExactly(singletonList(input("domain", "gooddomain.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com")));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
+                .containsExactly(asList(input("domain", "gooddomain.com")));
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("age").add("52"); // match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain2.com"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(2, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertFalse("D2", result.contains("D2"));
-        assertFalse("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(2, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertFalse("D2", matchedExpressions.contains("D2"));
+        assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("20"); // match
         input.getOrCreateStringCategory("age").add("40"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain2.com"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(2, result.size());
-        assertTrue("AR2", result.contains("AR2"));
-        assertFalse("D2", result.contains("D2"));
-        assertFalse("AR2 and D2", result.contains("AR2 and D2"));
-        assertTrue("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(2, matchedExpressions.size());
+        assertTrue("AR2", matchedExpressions.contains("AR2"));
+        assertFalse("D2", matchedExpressions.contains("D2"));
+        assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
 
         input = new BEInput();
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("age").add("10"); // no match
         input.getOrCreateStringCategory("age").add("40"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain.com"); // no match
         input.getOrCreateStringCategory("domain").add("baddomain2.com"); // no match
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
-        assertFalse("AR2", result.contains("AR2"));
-        assertFalse("D2", result.contains("D2"));
-        assertFalse("AR2 and D2", result.contains("AR2 and D2"));
-        assertFalse("AR2 or D2", result.contains("AR2 or D2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(0, matchedExpressions.size());
+        assertFalse("AR2", matchedExpressions.contains("AR2"));
+        assertFalse("D2", matchedExpressions.contains("D2"));
+        assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
+        assertFalse("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
     }
 
     @Test // single elements in expressions, nested and, or
@@ -445,86 +551,205 @@ public class BEEvaluatorTest
         final BEEvaluator<String> evaluator = builder.build();
 
         BEInput input;
-        Set<String> result;
+        BEEvaluatorResult<String> result;
+        Set<String> matchedExpressions;
+
+        // match due to all terms
+        input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").add("a");
+        input.getOrCreateStringCategory("gender").add("b");
+        input.getOrCreateStringCategory("gender").add("c");
+        input.getOrCreateStringCategory("gender").add("d");
+        input.getOrCreateStringCategory("gender").add("e");
+        input.getOrCreateStringCategory("gender").add("f");
+
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "a"),
+                                input("gender", "b")),
+                        asList(
+                                input("gender", "c")),
+                        asList(
+                                input("gender", "d"),
+                                input("gender", "e"),
+                                input("gender", "f")));
+
+        // match due to first and second terms
+        input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").add("a");
+        input.getOrCreateStringCategory("gender").add("b");
+        input.getOrCreateStringCategory("gender").add("c");
+
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "a"),
+                                input("gender", "b")),
+                        asList(
+                                input("gender", "c")));
+
+        // match due to first and third terms
+        input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").add("a");
+        input.getOrCreateStringCategory("gender").add("b");
+        input.getOrCreateStringCategory("gender").add("d");
+        input.getOrCreateStringCategory("gender").add("e");
+        input.getOrCreateStringCategory("gender").add("f");
+
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "a"),
+                                input("gender", "b")),
+                        asList(
+                                input("gender", "d"),
+                                input("gender", "e"),
+                                input("gender", "f")));
+
+        // match due to second and third terms
+        input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").add("c");
+        input.getOrCreateStringCategory("gender").add("d");
+        input.getOrCreateStringCategory("gender").add("e");
+        input.getOrCreateStringCategory("gender").add("f");
+
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "c")),
+                        asList(
+                                input("gender", "d"),
+                                input("gender", "e"),
+                                input("gender", "f")));
 
         // match due to first term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("a");
         input.getOrCreateStringCategory("gender").add("b");
 
-        result = evaluator.evaluate(input);
-        assertEquals(1, result.size());
-        assertResultContains(result, true, "(GA and GB) or GC or (GD and GE and GF)");
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "a"),
+                                input("gender", "b")));
 
         // no match due to first term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("a");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(0, matchedExpressions.size());
 
         // match due to second term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("c");
 
-        result = evaluator.evaluate(input);
-        assertEquals(1, result.size());
-        assertResultContains(result, true, "(GA and GB) or GC or (GD and GE and GF)");
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "c")));
 
         // match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("d");
         input.getOrCreateStringCategory("gender").add("e");
         input.getOrCreateStringCategory("gender").add("f");
 
-        result = evaluator.evaluate(input);
-        assertEquals(1, result.size());
-        assertResultContains(result, true, "(GA and GB) or GC or (GD and GE and GF)");
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertResultContains(matchedExpressions, true, "(GA and GB) or GC or (GD and GE and GF)");
+        assertThat(result.getPossibleInputValuesThatSatisfy("(GA and GB) or GC or (GD and GE and GF)"))
+                .containsExactlyInAnyOrder(
+                        asList(
+                                input("gender", "d"),
+                                input("gender", "e"),
+                                input("gender", "f")));
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("e");
         input.getOrCreateStringCategory("gender").add("f");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("d");
         input.getOrCreateStringCategory("gender").add("f");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("d");
         input.getOrCreateStringCategory("gender").add("e");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("d");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("e");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
 
         // no match due to third term
         input = new BEInput();
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("f");
 
-        result = evaluator.evaluate(input);
-        assertEquals(0, result.size());
+        matchedExpressions = evaluator.evaluate(input);
+        assertEquals(0, matchedExpressions.size());
     }
 
     /**
@@ -2545,7 +2770,7 @@ public class BEEvaluatorTest
     public void testEqualsAndHashCode() throws Exception
     {
         // Given
-        final List<BEDataTypeConfig> dataTypeConfigs = Arrays.asList(
+        final List<BEDataTypeConfig> dataTypeConfigs = asList(
                 new BEDataTypeConfig("gender", "string", true, false, false, false),
                 new BEDataTypeConfig("age", "byte", false, false, true, false),
                 new BEDataTypeConfig("domain", "string", true, true, false, true),
@@ -2595,13 +2820,23 @@ public class BEEvaluatorTest
 
     }
 
-    private void assertEvaluatorBuildersEqual(final BEEvaluatorBuilder b1, final BEEvaluatorBuilder b2) {
+    private void assertEvaluatorBuildersEqual(final BEEvaluatorBuilder b1, final BEEvaluatorBuilder b2)
+    {
         assertEquals(b1.build(), b2.build());
         assertEquals(b1.build().hashCode(), b2.build().hashCode());
     }
 
-    private void assertEvaluatorBuildersNotEqual(final BEEvaluatorBuilder b1, final BEEvaluatorBuilder b2) {
+    private void assertEvaluatorBuildersNotEqual(final BEEvaluatorBuilder b1, final BEEvaluatorBuilder b2)
+    {
         assertNotEquals(b1.build(), b2.build());
         assertNotEquals(b1.build().hashCode(), b2.build().hashCode());
+    }
+
+    private BEStringInputAttributeCategory input(String categoryName, String... values)
+    {
+        final BEStringInputAttributeCategory category =
+                new BEStringInputAttributeCategory(categoryName.toUpperCase(), true);
+        Arrays.stream(values).forEach(category::add);
+        return category;
     }
 }

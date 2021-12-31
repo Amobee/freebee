@@ -117,7 +117,7 @@
         <module name="StringLiteralEquality"/>
         <module name="NoFinalizer"/>
         <module name="PackageDeclaration"/>
-        <module name="ReturnCount"/>
+        <!--<module name="ReturnCount"/>-->
         <!--module name="DeclarationOrder"/-->
         <module name="ExplicitInitialization"/>
         <module name="DefaultComesLast"/>

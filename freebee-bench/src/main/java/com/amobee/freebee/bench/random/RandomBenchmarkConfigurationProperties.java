@@ -5,11 +5,13 @@ public class RandomBenchmarkConfigurationProperties
     private static final int DEFAULT_MAX_EXPRESSION_DEPTH = 3;
     private static final int DEFAULT_MAX_EXPRESSION_WIDTH = 1000;
     private static final int DEFAULT_MAX_INPUT_VALUES = 100;
+    private static final boolean DEFAULT_TRACKING_ENABLED = true;
 
     private Long randomSeed;
     private int maxDepth = DEFAULT_MAX_EXPRESSION_DEPTH;
     private int maxWidth = DEFAULT_MAX_EXPRESSION_WIDTH;
     private int maxInputValues = DEFAULT_MAX_INPUT_VALUES;
+    private boolean inputTrackingEnabled = DEFAULT_TRACKING_ENABLED;
 
     public Long getRandomSeed()
     {
@@ -75,6 +77,22 @@ public class RandomBenchmarkConfigurationProperties
         return this;
     }
 
+    public boolean isInputTrackingEnabled()
+    {
+        return this.inputTrackingEnabled;
+    }
+
+    public void setInputTrackingEnabled(final boolean inputTrackingEnabled)
+    {
+        this.inputTrackingEnabled = inputTrackingEnabled;
+    }
+
+    public RandomBenchmarkConfigurationProperties withInputTracingEnabled(final boolean tracingEnabled)
+    {
+        this.inputTrackingEnabled = tracingEnabled;
+        return this;
+    }
+
     @Override
     public String toString()
     {
@@ -83,6 +101,7 @@ public class RandomBenchmarkConfigurationProperties
                 ", maxDepth=" + this.maxDepth +
                 ", maxWidth=" + this.maxWidth +
                 ", maxInputValues=" + this.maxInputValues +
+                ", inputTracingEnabled=" + this.inputTrackingEnabled +
                 '}';
     }
 }

@@ -30,6 +30,7 @@ public class BenchmarkRunner
     private static final int EXPRESSION_COUNT = 1_000;
     private static final int MAX_EXPRESSION_WIDTH = 100;
     private static final int MAX_EXPRESSION_DEPTH = 5;
+    private static final boolean INPUT_TRACING_ENABLED = false;
     private static final long RANDOM_SEED = 14888790436548L;
 
     private BenchmarkRunner() {}
@@ -43,7 +44,8 @@ public class BenchmarkRunner
                         .withRandomSeed(RANDOM_SEED)
                         .withMaxDepth(MAX_EXPRESSION_DEPTH)
                         .withMaxWidth(MAX_EXPRESSION_WIDTH)
-                        .withMaxInputValues(MAX_VALUES_PER_INPUT);
+                        .withMaxInputValues(MAX_VALUES_PER_INPUT)
+                        .withInputTracingEnabled(INPUT_TRACING_ENABLED);
 
         final BenchmarkConfiguration configuration = new RandomBenchmarkConfiguration(expressionGeneratorProperties);
 

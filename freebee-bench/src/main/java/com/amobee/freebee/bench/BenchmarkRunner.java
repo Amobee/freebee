@@ -25,11 +25,12 @@ public class BenchmarkRunner
     private static final Logger logger = LoggerFactory.getLogger(BenchmarkRunner.class);
 
     // TODO externalize this configuration. For now, change this values in order to configure the benchmark
-    private static final int INPUT_COUNT = 5_000;
-    private static final int MAX_VALUES_PER_INPUT = 100;
-    private static final int EXPRESSION_COUNT = 1_000;
-    private static final int MAX_EXPRESSION_WIDTH = 100;
-    private static final int MAX_EXPRESSION_DEPTH = 5;
+    private static final int INPUT_COUNT = 1_000;
+    private static final int MAX_VALUES_PER_INPUT = 3_000;
+    private static final int EXPRESSION_COUNT = 6_500;
+    private static final int MAX_PREDICATES_PER_EXPRESSION = 5;
+    private static final int MAX_VALUES_PER_PREDICATE = 1_000;
+    private static final int MAX_EXPRESSION_DEPTH = 10;
     private static final boolean INPUT_TRACING_ENABLED = false;
     private static final long RANDOM_SEED = 14888790436548L;
 
@@ -43,7 +44,8 @@ public class BenchmarkRunner
                 new RandomBenchmarkConfigurationProperties()
                         .withRandomSeed(RANDOM_SEED)
                         .withMaxDepth(MAX_EXPRESSION_DEPTH)
-                        .withMaxWidth(MAX_EXPRESSION_WIDTH)
+                        .withMaxPredicatesPerExpression(MAX_PREDICATES_PER_EXPRESSION)
+                        .withMaxValuesPerPredicate(MAX_VALUES_PER_PREDICATE)
                         .withMaxInputValues(MAX_VALUES_PER_INPUT)
                         .withInputTracingEnabled(INPUT_TRACING_ENABLED);
 

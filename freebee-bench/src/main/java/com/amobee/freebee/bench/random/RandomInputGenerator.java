@@ -3,6 +3,7 @@ package com.amobee.freebee.bench.random;
 import com.amobee.freebee.bench.DataTypeConfigurer;
 import com.amobee.freebee.bench.DataValueProvider;
 import com.amobee.freebee.bench.InputGenerator;
+import com.amobee.freebee.bench.range.Range;
 import com.amobee.freebee.config.BEDataTypeConfig;
 import com.amobee.freebee.evaluator.evaluator.BEByteInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BEDoubleInputAttributeCategory;
@@ -10,7 +11,6 @@ import com.amobee.freebee.evaluator.evaluator.BEInput;
 import com.amobee.freebee.evaluator.evaluator.BEIntInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BELongInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BEStringInputAttributeCategory;
-import com.amobee.freebee.bench.range.Range;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -111,6 +111,10 @@ public class RandomInputGenerator implements InputGenerator
                 case STRING:
                     final BEStringInputAttributeCategory stringInputCategory = input.getOrCreateStringCategory(category);
                     stringInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
+                    if ("domain".equalsIgnoreCase(category))
+                    {
+                        stringInputCategory.setTrackingEnabled(true);
+                    }
                     values.forEach(stringInputCategory::add);
                     break;
                 default:

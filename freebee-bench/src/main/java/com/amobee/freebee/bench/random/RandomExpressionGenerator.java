@@ -19,7 +19,8 @@ public class RandomExpressionGenerator implements ExpressionGenerator
     private final DataValueProvider dataValueProvider;
     private final Random random;
     private final int maxDepth;
-    private final int maxWidth;
+    private final int maxPredicates;
+    private final int maxValuesPerPredicate;
 
     public RandomExpressionGenerator(
             final RandomBenchmarkConfigurationProperties properties,
@@ -28,22 +29,30 @@ public class RandomExpressionGenerator implements ExpressionGenerator
         this.dataValueProvider = dataValueProvider;
         this.random = properties.getRandomSeed() != null ? new Random(properties.getRandomSeed()) : new Random();
         this.maxDepth = properties.getMaxDepth();
-        this.maxWidth = properties.getMaxWidth();
+        this.maxPredicates = properties.getMaxPredicatesPerExpression();
+        this.maxValuesPerPredicate = properties.getMaxValuesPerPredicate();
     }
 
     @Override
     public BENode generate()
     {
-        return generate(this.maxDepth, this.maxWidth, new HashSet<>(this.dataValueProvider.getDataTypes()));
+        return generate(
+                this.maxDepth,
+                this.maxPredicates,
+                new HashSet<>(this.dataValueProvider.getDataTypes())
+        );
     }
 
     @SuppressWarnings("checkstyle:ReturnCount")
-    private BENode generate(final int maxDepth, final int maxWidth, final Set<String> availableDataTypes)
+    private BENode generate(
+            final int maxDepth,
+            final int maxPredicates,
+            final Set<String> availableDataTypes)
     {
 
-        if (maxDepth == 1 || maxWidth == 1 || availableDataTypes.size() == 1)
+        if (maxDepth == 1 || maxPredicates == 1 || availableDataTypes.size() == 1)
         {
-            return generatePredicateNode(maxWidth, availableDataTypes.toArray(new String[0]));
+            return generatePredicateNode(availableDataTypes.toArray(new String[0]));
         }
         else
         {
@@ -52,7 +61,7 @@ public class RandomExpressionGenerator implements ExpressionGenerator
             if (randomChoice == 0)
             {
                 // Return predicate node(s)
-                return generatePredicateNode(maxWidth, availableDataTypes.toArray(new String[0]));
+                return generatePredicateNode(availableDataTypes.toArray(new String[0]));
 
             }
             else if (randomChoice == 1)
@@ -62,13 +71,13 @@ public class RandomExpressionGenerator implements ExpressionGenerator
 
                 final List<SubtreeMetadata> subtreeShapes = randomizeShapeOfConjunctionSubtrees(
                         BEConjunctionType.OR,
-                        maxWidth,
+                        maxPredicates,
                         availableDataTypes);
 
                 final List<BENode> subtrees = new ArrayList<>();
                 for (final SubtreeMetadata metadata : subtreeShapes)
                 {
-                    subtrees.add(generate(maxDepth - 1, metadata.maxWidth, metadata.availableDataTypes));
+                    subtrees.add(generate(maxDepth - 1, metadata.maxPredicates, metadata.availableDataTypes));
                 }
                 return new BEConjunctionNode(BEConjunctionType.OR, subtrees);
 
@@ -80,23 +89,23 @@ public class RandomExpressionGenerator implements ExpressionGenerator
 
                 final List<SubtreeMetadata> subtreeShapes = randomizeShapeOfConjunctionSubtrees(
                         BEConjunctionType.AND,
-                        maxWidth,
+                        maxPredicates,
                         availableDataTypes);
 
                 final List<BENode> subtrees = new ArrayList<>();
                 for (final SubtreeMetadata metadata : subtreeShapes)
                 {
-                    subtrees.add(generate(maxDepth - 1, metadata.maxWidth, metadata.availableDataTypes));
+                    subtrees.add(generate(maxDepth - 1, metadata.maxPredicates, metadata.availableDataTypes));
                 }
                 return new BEConjunctionNode(BEConjunctionType.AND, subtrees);
             }
         }
     }
 
-    private BEPredicateNode generatePredicateNode(final int maxNumberOfValues, final String[] availableDataTypes)
+    private BEPredicateNode generatePredicateNode(final String[] availableDataTypes)
     {
 
-        if (maxNumberOfValues < 1 || availableDataTypes == null || availableDataTypes.length < 1)
+        if (availableDataTypes == null || availableDataTypes.length < 1)
         {
             throw new IllegalArgumentException("Invalid arguments for generating random predicate node");
         }
@@ -104,14 +113,13 @@ public class RandomExpressionGenerator implements ExpressionGenerator
         final int dataTypeChoice = this.random.nextInt(availableDataTypes.length);
         final String dataTypeName = availableDataTypes[dataTypeChoice];
 
-        return generatePredicateNode(maxNumberOfValues, dataTypeName);
+        return generatePredicateNode(dataTypeName);
 
     }
 
-    private BEPredicateNode generatePredicateNode(final int maxNumberOfValues, final String dataTypeName)
+    private BEPredicateNode generatePredicateNode(final String dataTypeName)
     {
-
-        if (maxNumberOfValues < 1 || dataTypeName == null)
+        if (dataTypeName == null)
         {
             throw new IllegalArgumentException("Invalid arguments for generating random predicate node");
         }
@@ -120,7 +128,7 @@ public class RandomExpressionGenerator implements ExpressionGenerator
 
         final DataValueProvider.RandomValueSelector valueSelector = this.dataValueProvider.getRandomValueSelector(dataTypeName);
 
-        final int maxValues = Math.min(maxNumberOfValues, valueSelector.getMaxUniqueValues());
+        final int maxValues = Math.min(this.maxValuesPerPredicate, valueSelector.getMaxUniqueValues());
         final int numValuesChoice = this.random.nextInt(maxValues) + 1;
 
         final String[] values = valueSelector.getValueArray(numValuesChoice);
@@ -131,10 +139,10 @@ public class RandomExpressionGenerator implements ExpressionGenerator
 
     private List<SubtreeMetadata> randomizeShapeOfConjunctionSubtrees(
             final BEConjunctionType conjunctionType,
-            final int maxWidth,
+            final int maxPredicates,
             final Set<String> availableDataTypes)
     {
-        final int maxChildNodes = Math.min(maxWidth, availableDataTypes.size());
+        final int maxChildNodes = Math.min(maxPredicates, availableDataTypes.size());
         if (maxChildNodes < 2)
         {
             throw new IllegalStateException("Cannot create a conjunction node with one child node");
@@ -144,48 +152,47 @@ public class RandomExpressionGenerator implements ExpressionGenerator
         if (BEConjunctionType.OR.equals(conjunctionType))
         {
             // NOTE: OR passes same available data types to all subtrees
-
             final List<SubtreeMetadata> subtreeShapes = new ArrayList<>();
-            int remainingMaxWidth = maxWidth;
+            int remainingMaxPredicates = maxPredicates;
             int remainingChildNodes = numberOfChildNodes;
             while (remainingChildNodes > 1 /* stop with one child node left */)
             {
-                final int adjustedMaxWidth = remainingMaxWidth - remainingChildNodes + 1;  // each node needs at least 1 value, so adjust the max to leave enough left over for the next node(s).
+                final int adjustedMaxPredicates = remainingMaxPredicates - remainingChildNodes + 1;  // each node needs at least 1 predicate.
 
-                final int subtreeMaxWidth = randomIntBetween(1, adjustedMaxWidth + 1);
-                remainingMaxWidth = remainingMaxWidth - subtreeMaxWidth;
+                final int subtreeMaxPredicates = randomIntBetween(1, adjustedMaxPredicates + 1);
+                remainingMaxPredicates = remainingMaxPredicates - subtreeMaxPredicates;
 
-                subtreeShapes.add(new SubtreeMetadata(subtreeMaxWidth, availableDataTypes));
+                subtreeShapes.add(new SubtreeMetadata(subtreeMaxPredicates, availableDataTypes));
                 remainingChildNodes--;
             }
-            subtreeShapes.add(new SubtreeMetadata(remainingMaxWidth, availableDataTypes));  // add the last child node
+            subtreeShapes.add(new SubtreeMetadata(remainingMaxPredicates, availableDataTypes));  // add the last child node
             return subtreeShapes;
 
         }
         else if (BEConjunctionType.AND.equals(conjunctionType))
         {
-            // NOTE: AND splits available data types between all available subtrees to avoid (x == 1 AND x ==2)
+            // NOTE: AND splits available data types between all available subtrees to avoid (x == 1 AND x == 2)
 
             final List<SubtreeMetadata> subtreeShapes = new ArrayList<>();
             final Set<String> remainingDataTypes = new HashSet<>(availableDataTypes);
-            int remainingMaxWidth = maxWidth;
+            int remainingMaxPredicates = maxPredicates;
             int remainingChildNodes = numberOfChildNodes;
             while (remainingChildNodes > 1 /* stop with one child node left */)
             {
-                final int adjustedMaxWidth = remainingMaxWidth - remainingChildNodes + 1;  // each node needs at least 1 value, so adjust the max to leave enough left over for the next node(s).
+                final int adjustedMaxPredicates = remainingMaxPredicates - remainingChildNodes + 1;  // each node needs at least 1 predicate.
                 final int adjustedMaxDataTypes = remainingDataTypes.size() - remainingChildNodes + 1;
 
-                final int subtreeMaxWidth = randomIntBetween(1, adjustedMaxWidth + 1);
-                remainingMaxWidth = remainingMaxWidth - subtreeMaxWidth;
+                final int subtreeMaxPredicates = randomIntBetween(1, adjustedMaxPredicates + 1);
+                remainingMaxPredicates = remainingMaxPredicates - subtreeMaxPredicates;
 
                 final Set<String> subtreeDataTypes =
                         Utils.randomSubset(remainingDataTypes, 1, adjustedMaxDataTypes + 1, this.random);
                 remainingDataTypes.removeAll(subtreeDataTypes);
 
-                subtreeShapes.add(new SubtreeMetadata(subtreeMaxWidth, subtreeDataTypes));
+                subtreeShapes.add(new SubtreeMetadata(subtreeMaxPredicates, subtreeDataTypes));
                 remainingChildNodes--;
             }
-            subtreeShapes.add(new SubtreeMetadata(remainingMaxWidth, remainingDataTypes));  // add the last child node
+            subtreeShapes.add(new SubtreeMetadata(remainingMaxPredicates, remainingDataTypes));  // add the last child node
             return subtreeShapes;
 
         }
@@ -204,12 +211,12 @@ public class RandomExpressionGenerator implements ExpressionGenerator
 
     private static class SubtreeMetadata
     {
-        private final int maxWidth;
+        private final int maxPredicates;
         private final Set<String> availableDataTypes;
 
-        SubtreeMetadata(final int maxWidth, final Set<String> availableDataTypes)
+        SubtreeMetadata(final int maxPredicates, final Set<String> availableDataTypes)
         {
-            this.maxWidth = maxWidth;
+            this.maxPredicates = maxPredicates;
             this.availableDataTypes = availableDataTypes;
         }
     }

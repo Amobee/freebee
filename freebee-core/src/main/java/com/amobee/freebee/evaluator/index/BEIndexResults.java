@@ -37,15 +37,18 @@ public class BEIndexResults
 
     public void addInterval(@Nonnull final BEInterval interval)
     {
-        addInterval(interval, null);
+        addInterval(interval, null, null);
     }
 
-    public void addInterval(@Nonnull final BEInterval interval, @Nullable final BEInputAttributeCategory matchedInputValue)
+    public void addInterval(
+            @Nonnull final BEInterval interval,
+            @Nullable final BEInputAttributeCategory matchedInputValue,
+            @Nullable final BEIndexExpressionResult partialExpressionResult)
     {
         final int exprId = interval.getExpressionId();
         this.indexExpressionResults
                 .getIfAbsentPut(exprId, createExpressionIndexResultBuilder(exprId))
-                .addInterval(interval, matchedInputValue);
+                .addInterval(interval, matchedInputValue, partialExpressionResult);
     }
 
     private BEIndexExpressionResult createExpressionIndexResultBuilder(final int expressionId)

@@ -18,7 +18,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Expression index runtime.
@@ -245,18 +249,33 @@ public class BEIndex<T> implements Serializable
         final BEIndexResults indexResults = new BEIndexResults(this.expressionMetadataProvider);
 
         this.attributeCategories.forEach((attributeCategoryName, indexAttributeCategory) ->
-                evaluateAttributeCategory(input.getCategory(attributeCategoryName), indexAttributeCategory, indexResults));
+                evaluateAttributeCategory(
+                        input.getCategory(attributeCategoryName),
+                        indexAttributeCategory,
+                        indexResults,
+                        null));
 
         return indexResults;
     }
 
     public void addRefIntervalsForMatchedPartialExpressions(
-            @Nonnull final Set<String> matchedPartialExpressionNames,
+            @Nonnull final List<BEIndexExpressionResult> matchedPartialExpressions,
             @Nonnull final BEIndexResults indexResults)
     {
+
+        final Map<String, BEIndexExpressionResult> matchedPartialExpressionResultsByName =
+                matchedPartialExpressions.stream()
+                    .collect(Collectors.toMap(BEIndexExpressionResult::getPartialExpressionName, Function.identity()));
+        final Set<String> matchedPartialExpressionNames = matchedPartialExpressionResultsByName.keySet();
+
         final BEStringInputAttributeCategory refInputAttributeCategory = new BEStringInputAttributeCategory(REF_INPUT_ATTRIBUTE_CATEGORY);
+        refInputAttributeCategory.setTrackingEnabled(true);
         matchedPartialExpressionNames.forEach(refInputAttributeCategory::add);
-        evaluateAttributeCategory(refInputAttributeCategory, this.refAttributeCategory, indexResults);
+        evaluateAttributeCategory(
+                refInputAttributeCategory,
+                this.refAttributeCategory,
+                indexResults,
+                matchedPartialExpressionResultsByName);
     }
 
     /**
@@ -269,7 +288,8 @@ public class BEIndex<T> implements Serializable
     private void evaluateAttributeCategory(
             @Nullable final BEInputAttributeCategory inputAttributeCategory,
             @Nonnull final BEIndexAttributeCategory indexAttributeCategory,
-            @Nonnull final BEIndexResults indexResults)
+            @Nonnull final BEIndexResults indexResults,
+            @Nullable final Map<String, BEIndexExpressionResult> indexPartialExpressionResults)
     {
         final MutableIntSet matchedNegativeIntervalIds = new IntHashSet();
 
@@ -287,7 +307,16 @@ public class BEIndex<T> implements Serializable
                     }
                     else
                     {
-                        indexResults.addInterval(interval, matchedInputValue);
+                        BEIndexExpressionResult partialExpressionResult = null;
+                        if (indexPartialExpressionResults != null && matchedInputValue instanceof BEStringInputAttributeCategory)
+                        {
+                            partialExpressionResult = ((BEStringInputAttributeCategory) matchedInputValue).getValues()
+                                    .stream()
+                                    .findFirst()
+                                    .map(indexPartialExpressionResults::get)
+                                    .orElse(null);
+                        }
+                        indexResults.addInterval(interval, matchedInputValue, partialExpressionResult);
                     }
                 }
             });

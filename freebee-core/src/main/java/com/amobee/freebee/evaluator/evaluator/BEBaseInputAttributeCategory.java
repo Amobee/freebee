@@ -1,7 +1,9 @@
 package com.amobee.freebee.evaluator.evaluator;
 
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 /**
  * A base implementation class for BEInputAttributeCategory.
@@ -9,10 +11,12 @@ import java.util.Objects;
  * flor enabling tracking.
  * @author Kevin Doran
  */
+@ToString
+@EqualsAndHashCode
 public abstract class BEBaseInputAttributeCategory implements BEInputAttributeCategory
 {
-    private final String name;
-    private boolean trackingEnabled;
+    protected final String name;
+    protected boolean trackingEnabled;
 
     public BEBaseInputAttributeCategory(@Nonnull final String attributeCategoryName)
     {
@@ -44,27 +48,6 @@ public abstract class BEBaseInputAttributeCategory implements BEInputAttributeCa
     public void setTrackingEnabled(final boolean trackingEnabled)
     {
         this.trackingEnabled = trackingEnabled;
-    }
-
-    @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        final BEBaseInputAttributeCategory that = (BEBaseInputAttributeCategory) o;
-        return Objects.equals(this.name, that.name);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(this.name);
     }
 
     @Override

@@ -10,10 +10,10 @@ import com.amobee.freebee.evaluator.interval.Interval;
 
 import javax.annotation.Nonnull;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link BEEvaluator} that uses a hybrid matching algorithm
@@ -94,17 +94,15 @@ public class BEHybridEvaluator<T> implements BEEvaluator<T>
         final BEIndexResults indexResults = this.index.findMatchingExpressionIntervals(input);
 
         // Using the matched expression intervals, evaluate partial expressions that were fully matched by the input
-        final Set<String> matchedPartialExpressionNames = new HashSet<>();
-        indexResults.getExpressionResults()
+        final List<BEIndexExpressionResult> matchedPartialExpressions = indexResults.getExpressionResults()
                 .stream()
                 .filter(BEIndexExpressionResult::isPartial)
                 .filter(this::match)
-                .map(BEIndexExpressionResult::getPartialExpressionName)
-                .forEach(matchedPartialExpressionNames::add);
+                .collect(Collectors.toList());
 
         // If any partial expressions were matched, we must now add the referenced partial expression ids to the input
         // and rerun the index query to find more intervals (for full expressions) that may now match.
-        this.index.addRefIntervalsForMatchedPartialExpressions(matchedPartialExpressionNames, indexResults);
+        this.index.addRefIntervalsForMatchedPartialExpressions(matchedPartialExpressions, indexResults);
         return indexResults;
     }
 

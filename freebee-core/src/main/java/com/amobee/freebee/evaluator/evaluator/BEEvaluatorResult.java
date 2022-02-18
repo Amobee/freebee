@@ -7,10 +7,12 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +59,7 @@ public class BEEvaluatorResult<T>
      * Note: Input attribute categories and values are only returned if tracking is enabled when creating the input
      * attribute category. Untracked categories will not appear at all in the return values of this method.
      */
-    public List<List<? extends BEInputAttributeCategory>> getPossibleInputValuesThatSatisfy(final T expressionData)
+    public Set<List<BEInputAttributeCategory>> getPossibleInputValuesThatSatisfy(final T expressionData)
     {
         if (expressionData == null)
         {
@@ -65,29 +67,41 @@ public class BEEvaluatorResult<T>
         }
 
         final BEIndexExpressionResult indexExpressionResult = this.matchedExpressionIntervals.get(expressionData);
+        return getPossibleInputValuesThatSatisfy(indexExpressionResult);
+    }
 
+    private Set<List<BEInputAttributeCategory>> getPossibleInputValuesThatSatisfy(final BEIndexExpressionResult indexExpressionResult)
+    {
         if (indexExpressionResult == null)
         {
             return null;
         }
 
-        final List<List<BEMatchedInterval>> possibleCompleteIntervalPaths =
+        final List<List<BEMatchedInterval>> possibleCompleteIntervalPathsWithPartialExpressionRefs =
                 findAllPossibleIntervalPathsThatSatisfyTheExpression(indexExpressionResult);
 
-        final List<List<? extends BEInputAttributeCategory>> matchedInputValues = new ArrayList<>(possibleCompleteIntervalPaths.size());
-        for (final List<BEMatchedInterval> intervalPath : possibleCompleteIntervalPaths)
+        // Now, we need to expand partial expressions into possible paths that complete them, and
+        // incorporate those results into the full expressions.
+        final List<List<BEMatchedInterval>> possibleCompleteIntervalPathsFlattened = new ArrayList<>();
+        for (final List<BEMatchedInterval> pathOfIntervals : possibleCompleteIntervalPathsWithPartialExpressionRefs)
+        {
+            possibleCompleteIntervalPathsFlattened.addAll(replacePartialExpressionRefsWithIntervalPaths(pathOfIntervals));
+        }
+
+        final Set<List<BEInputAttributeCategory>> matchedInputValues = new LinkedHashSet<>(possibleCompleteIntervalPathsFlattened.size());
+        for (final List<BEMatchedInterval> pathOfIntervals : possibleCompleteIntervalPathsFlattened)
         {
             // Each path will result in a List<? extends BEInputAttributeCategory> where each element in
             // the list is one set of possible values that would complete the leaf node in the expression
-            final List<? extends BEInputAttributeCategory> possibleValuesToSatisfyThisPath =
-                    intervalPath.stream()
+            final List<BEInputAttributeCategory> possibleValuesToSatisfyThisPath =
+                    pathOfIntervals.stream()
                             .map(BEMatchedInterval::getMatchedInputValues)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-            if (!possibleValuesToSatisfyThisPath.isEmpty())
-            {
-                matchedInputValues.add(possibleValuesToSatisfyThisPath);
-            }
+            // Add the list of possible values that satisfy the current path to the
+            // set representing all possible paths. We use a set so that duplicate lists
+            // (e.g., an empty list) only occur once in the overall result.
+            matchedInputValues.add(possibleValuesToSatisfyThisPath);
         }
 
         return matchedInputValues;
@@ -135,9 +149,68 @@ public class BEEvaluatorResult<T>
                 currentPath.add(interval);
                 final int nextIntervalEndPosition = interval.getEnd();
                 findAllCompleteIntervalPaths(nextIntervalEndPosition, terminalPosition, currentPath, intervalsByStartingPosition, completePaths);
+
+                // This is a depth first search, with the recursive call above this line.
+                // By the time we have reached this next line, we have completed one possible path.
+                // The next iteration of the for loop represents a new possible path in our DFX,
+                // so we need to remove the interval that was added previously before iterating
+                // on the loop to resume searching on a new path that takes a different "fork"
                 currentPath.remove(currentPath.size() - 1);
             }
         }
+    }
+
+    private List<List<BEMatchedInterval>> replacePartialExpressionRefsWithIntervalPaths(
+            final List<BEMatchedInterval> possibleCompleteIntervalPathsWithPartialExpressionRefs)
+    {
+        final List<List<BEMatchedInterval>> possibleCompleteIntervalPathsFlattened = new ArrayList<>();
+        possibleCompleteIntervalPathsFlattened.add(new ArrayList<>());
+
+        final Stack<BEMatchedInterval> remainingIntervalsOnPath = new Stack<>();
+        for (int i = possibleCompleteIntervalPathsWithPartialExpressionRefs.size() - 1; i >= 0; i--)
+        {
+            remainingIntervalsOnPath.add(possibleCompleteIntervalPathsWithPartialExpressionRefs.get(i));
+        }
+
+        return expandIntervalsRepresentingPartialExpressReferencesToPossibleCompletePaths(
+                possibleCompleteIntervalPathsFlattened,
+                remainingIntervalsOnPath);
+
+    }
+
+    private List<List<BEMatchedInterval>> expandIntervalsRepresentingPartialExpressReferencesToPossibleCompletePaths(
+            final List<List<BEMatchedInterval>> allFlattenedPaths,
+            final Stack<BEMatchedInterval> remainingIntervalsOnPath)
+    {
+        List<List<BEMatchedInterval>> updatedFlattenedPaths = allFlattenedPaths;
+        while (!remainingIntervalsOnPath.isEmpty())
+        {
+            final BEMatchedInterval nextInterval = remainingIntervalsOnPath.pop();
+            if (nextInterval.isPartialExpressionReferenceInterval())
+            {
+                final List<List<BEMatchedInterval>> possibleCompleteIntervalPathsThatSatisfyThePartialExpression =
+                        findAllPossibleIntervalPathsThatSatisfyTheExpression(nextInterval.getPartialExpressionIndexResult());
+
+                // multiply our current 2D list representing all paths for all expressions
+                // by the new 2D list representing all paths for the partial expression
+                updatedFlattenedPaths = new ArrayList<>();
+                for (final List<BEMatchedInterval> path : allFlattenedPaths)
+                {
+                    for (final List<BEMatchedInterval> partialExpressionPath : possibleCompleteIntervalPathsThatSatisfyThePartialExpression)
+                    {
+                        final List<BEMatchedInterval> flattenedPath = new ArrayList<>(path);
+                        flattenedPath.addAll(partialExpressionPath);
+                        updatedFlattenedPaths.add(flattenedPath);
+                    }
+                }
+            }
+            else
+            {
+                updatedFlattenedPaths.forEach(path -> path.add(nextInterval));
+            }
+            updatedFlattenedPaths = expandIntervalsRepresentingPartialExpressReferencesToPossibleCompletePaths(updatedFlattenedPaths, remainingIntervalsOnPath);
+        }
+        return updatedFlattenedPaths;
     }
 
 }

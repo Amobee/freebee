@@ -74,25 +74,28 @@ public class BEIndexExpressionResult implements BEExpressionMetadata, Serializab
         return this.matchedBits;
     }
 
-    void addInterval(final BEInterval interval, final BEInputAttributeCategory matchedInputValues)
+    void addInterval(
+            final BEInterval interval,
+            final BEInputAttributeCategory matchedInputValues,
+            final BEIndexExpressionResult partialExpressionResult)
     {
         final int intervalId = interval.getIntervalId();
-        final BEMatchedInterval matchedInterval = this.matchedIntervals.get(intervalId);
+        BEMatchedInterval matchedInterval = this.matchedIntervals.get(intervalId);
         if (matchedInterval == null)
         {
             // Create a matched interval from the raw interval and add it to the matched intervals for this expression
-            final BEMatchedInterval newMatchedInterval = new BEMatchedInterval(interval);
-            newMatchedInterval.addMatchedInputValues(matchedInputValues);
+            final BEMatchedInterval newMatchedInterval = new BEMatchedInterval(interval, partialExpressionResult != null);
             this.matchedIntervals.put(intervalId, newMatchedInterval);
             if (this.useBitSetMatching)
             {
                 this.matchedBits.or(interval.getBits());
             }
-        } else
-        {
-            // Update matched interval with new input
-            matchedInterval.addMatchedInputValues(matchedInputValues);
+            matchedInterval = newMatchedInterval;
         }
-    }
 
+        // Update matched interval with new input
+        matchedInterval.addMatchedInputValues(matchedInputValues);
+        matchedInterval.setPartialExpressionIndexResult(partialExpressionResult);
+
+    }
 }

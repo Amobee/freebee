@@ -1,6 +1,7 @@
 package com.amobee.freebee.evaluator;
 
 import com.amobee.freebee.evaluator.evaluator.BEInputAttributeCategory;
+import com.amobee.freebee.evaluator.index.BEIndexExpressionResult;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -24,22 +25,32 @@ public class BEMatchedInterval extends BEInterval
     private static final long serialVersionUID = -2315253087374471504L;
 
     private BEInputAttributeCategory matchedInputValues;
+    private final boolean partialExpressionReferenceInterval;
+    private BEIndexExpressionResult partialExpressionIndexResult;
 
     public BEMatchedInterval(
             final int expressionId,
             final int intervalId,
+            final boolean isPartialExpressionReferenceInterval,
             final boolean canUseBitSetMatching,
             final boolean negative,
             @Nonnull final BitSet bits)
     {
         super(expressionId, intervalId, canUseBitSetMatching, negative, bits);
+        this.partialExpressionReferenceInterval = isPartialExpressionReferenceInterval;
     }
 
     public BEMatchedInterval(@Nonnull final BEInterval other)
     {
+        this(other, false);
+    }
+
+    public BEMatchedInterval(@Nonnull final BEInterval other, final boolean isPartialExpressionReferenceInterval)
+    {
         this(
                 other.getExpressionId(),
                 other.getIntervalId(),
+                isPartialExpressionReferenceInterval,
                 other.isCanUseBitSetMatching(),
                 other.isNegative(),
                 other.getBits()
@@ -70,6 +81,11 @@ public class BEMatchedInterval extends BEInterval
                 this.matchedInputValues.addAll(matchedInputAttributeCategoryValues);
             }
         }
+    }
+
+    public void setPartialExpressionIndexResult(final BEIndexExpressionResult partialExpressionIndexResult)
+    {
+        this.partialExpressionIndexResult = partialExpressionIndexResult;
     }
 
 };

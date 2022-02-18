@@ -4,20 +4,19 @@ import com.amobee.freebee.evaluator.BEInterval;
 import com.amobee.freebee.evaluator.index.BEAttributeCategoryMatchedIntervalConsumer;
 import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
 import com.google.common.annotations.VisibleForTesting;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.eclipse.collections.api.list.primitive.ImmutableDoubleList;
 import org.eclipse.collections.api.list.primitive.MutableDoubleList;
 import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
 
 import javax.annotation.Nonnull;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * @author Michael Bond
  */
-@ToString
+@EqualsAndHashCode(callSuper = true)
 public class BEDoubleInputAttributeCategory extends BEBaseInputAttributeCategory
 {
     private final MutableDoubleList values = new DoubleArrayList();
@@ -92,27 +91,12 @@ public class BEDoubleInputAttributeCategory extends BEBaseInputAttributeCategory
     }
 
     @Override
-    public boolean equals(final Object o)
+    public String toString()
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        if (!super.equals(o))
-        {
-            return false;
-        }
-        final BEDoubleInputAttributeCategory that = (BEDoubleInputAttributeCategory) o;
-        return Objects.equals(this.values, that.values);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(super.hashCode(), this.values);
+        return "BEDoubleInputAttributeCategory{" +
+                "name='" + this.name + '\'' +
+                ", trackingEnabled=" + this.trackingEnabled +
+                ", values=" + this.values +
+                '}';
     }
 }

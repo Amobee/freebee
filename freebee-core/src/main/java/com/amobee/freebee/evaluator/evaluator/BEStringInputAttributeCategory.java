@@ -5,18 +5,17 @@ import com.amobee.freebee.evaluator.index.BEAttributeCategoryMatchedIntervalCons
 import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * @author Michael Bond
  */
-@ToString
+@EqualsAndHashCode(callSuper = true)
 public class BEStringInputAttributeCategory extends BEBaseInputAttributeCategory
 {
     private final List<String> values = new ArrayList<>();
@@ -84,34 +83,19 @@ public class BEStringInputAttributeCategory extends BEBaseInputAttributeCategory
         return new BEStringInputAttributeCategory(this);
     }
 
-    @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
-        if (!super.equals(o))
-        {
-            return false;
-        }
-        final BEStringInputAttributeCategory that = (BEStringInputAttributeCategory) o;
-        return Objects.equals(this.values, that.values);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(super.hashCode(), this.values);
-    }
-
     @VisibleForTesting
     public ImmutableList<String> getValues()
     {
         return ImmutableList.copyOf(this.values);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "BEStringInputAttributeCategory{" +
+                "name='" + this.name + '\'' +
+                ", trackingEnabled=" + this.trackingEnabled +
+                ", values=" + this.values +
+                '}';
     }
 }

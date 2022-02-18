@@ -15,11 +15,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -206,13 +208,14 @@ public class BEEvaluatorTest
         assertTrue("D2", matchedExpressions.contains("D2"));
         assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2"))
+                .containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
                 .containsExactly(singletonList(input("domain", "gooddomain.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
                 .containsExactly(asList(input("domain", "gooddomain.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
-                .containsExactly(asList(input("domain", "gooddomain.com")));
+                .containsExactly(emptyList(), asList(input("domain", "gooddomain.com")));
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -228,10 +231,10 @@ public class BEEvaluatorTest
         assertFalse("D2", matchedExpressions.contains("D2"));
         assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).containsExactly(emptyList());
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -264,13 +267,13 @@ public class BEEvaluatorTest
         assertTrue("D2", matchedExpressions.contains("D2"));
         assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
                 .containsExactly(singletonList(input("domain", "gooddomain.com", "gooddomain2.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
                 .containsExactly(asList(input("domain", "gooddomain.com", "gooddomain2.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
-                .containsExactly(asList(input("domain", "gooddomain.com", "gooddomain2.com")));
+                .containsExactly(emptyList(), asList(input("domain", "gooddomain.com", "gooddomain2.com")));
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -287,13 +290,13 @@ public class BEEvaluatorTest
         assertTrue("D2", matchedExpressions.contains("D2"));
         assertTrue("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2"))
                 .containsExactly(singletonList(input("domain", "gooddomain.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2"))
                 .containsExactly(asList(input("domain", "gooddomain.com")));
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2"))
-                .containsExactly(asList(input("domain", "gooddomain.com")));
+                .containsExactly(emptyList(), asList(input("domain", "gooddomain.com")));
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -310,10 +313,10 @@ public class BEEvaluatorTest
         assertFalse("D2", matchedExpressions.contains("D2"));
         assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).containsExactly(emptyList());
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -330,10 +333,10 @@ public class BEEvaluatorTest
         assertFalse("D2", matchedExpressions.contains("D2"));
         assertFalse("AR2 and D2", matchedExpressions.contains("AR2 and D2"));
         assertTrue("AR2 or D2", matchedExpressions.contains("AR2 or D2"));
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2")).containsExactly(emptyList());
         assertThat(result.getPossibleInputValuesThatSatisfy("D2")).isNull();
         assertThat(result.getPossibleInputValuesThatSatisfy("AR2 and D2")).isNull();
-        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).isEmpty();
+        assertThat(result.getPossibleInputValuesThatSatisfy("AR2 or D2")).containsExactly(emptyList());
 
         input = new BEInput();
         input.getOrCreateStringCategory("age").setTrackingEnabled(false);
@@ -2116,28 +2119,44 @@ public class BEEvaluatorTest
         builder.addDataTypeConfig(DATA_TYPE_CONFIG);
         builder.addPartialExpression("dg:1", "{\"type\":\"domain\",\"values\":[{\"id\":\".videologygroup.com\"}]}");
         builder.addPartialExpression("ag:1", "{\"type\":\"age\",\"values\":[{\"id\":\"[18,24)\"}]}");
-        builder.addExpression("test1", "{\"type\":\"and\",\"values\":[{\"type\":\"ref\",\"values\":[{\"id\":\"dg:1\"}]},{\"type\":\"gender\",\"values\":[{\"id\":\"M\"}]}]}");
-        builder.addExpression("test2", "{\"type\":\"and\",\"values\":[{\"type\":\"ref\",\"values\":[{\"id\":\"dg:1\"}]},{\"type\":\"ref\",\"values\":[{\"id\":\"ag:1\"}]},{\"type\":\"gender\",\"values\":[{\"id\":\"F\"}]}]}");
+        builder.addExpression("D and G1", "{\"type\":\"and\",\"values\":[{\"type\":\"ref\",\"values\":[{\"id\":\"dg:1\"}]},{\"type\":\"gender\",\"values\":[{\"id\":\"M\"}]}]}");
+        builder.addExpression("D and A and G2", "{\"type\":\"and\",\"values\":[{\"type\":\"ref\",\"values\":[{\"id\":\"dg:1\"}]},{\"type\":\"ref\",\"values\":[{\"id\":\"ag:1\"}]},{\"type\":\"gender\",\"values\":[{\"id\":\"F\"}]}]}");
 
         final BEEvaluator<String> evaluator = builder.build();
 
-        BEInput input = new BEInput();
-        input.getOrCreateStringCategory("domain").add("www.videologygroup.com");
-        input.getOrCreateStringCategory("age").add("[18,24)");
-        input.getOrCreateStringCategory("gender").add("M");
-
-        Set<String> result = evaluator.evaluate(input);
-        assertEquals(1, result.size());
-        assertTrue("test1", result.contains("test1"));
+        BEInput input;
+        BEEvaluatorResult<String> result;
+        Set<String> matchedExpressions;
 
         input = new BEInput();
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
         input.getOrCreateStringCategory("domain").add("www.videologygroup.com");
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
         input.getOrCreateStringCategory("age").add("[18,24)");
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("gender").add("M");
+
+//        result = evaluator.evaluateAndTrack(input);
+//        matchedExpressions = result.getMatchedExpressions();
+//        assertEquals(1, matchedExpressions.size());
+//        assertTrue("D and G1", matchedExpressions.contains("D and G1"));
+//        assertThat(result.getPossibleInputValuesThatSatisfy("D and G1")).containsExactly(
+//                asList(input.getCategory("domain"), input.getCategory("gender")));
+
+        input = new BEInput();
+        input.getOrCreateStringCategory("domain").setTrackingEnabled(true);
+        input.getOrCreateStringCategory("domain").add("www.videologygroup.com");
+        input.getOrCreateStringCategory("age").setTrackingEnabled(false);
+        input.getOrCreateStringCategory("age").add("[18,24)");
+        input.getOrCreateStringCategory("gender").setTrackingEnabled(true);
         input.getOrCreateStringCategory("gender").add("F");
 
-        result = evaluator.evaluate(input);
-        assertEquals(1, result.size());
-        assertTrue("test2", result.contains("test2"));
+        result = evaluator.evaluateAndTrack(input);
+        matchedExpressions = result.getMatchedExpressions();
+        assertEquals(1, matchedExpressions.size());
+        assertTrue("D and A and G2", matchedExpressions.contains("D and A and G2"));
+        assertThat(result.getPossibleInputValuesThatSatisfy("D and A and G2")).containsExactly(
+                asList(input.getCategory("domain"), input.getCategory("gender")));
     }
 
     @Test

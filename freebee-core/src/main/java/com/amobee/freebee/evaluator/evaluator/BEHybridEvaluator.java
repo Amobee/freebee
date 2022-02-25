@@ -1,18 +1,19 @@
 package com.amobee.freebee.evaluator.evaluator;
 
 import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.BEMatchedInterval;
 import com.amobee.freebee.evaluator.index.BEIndex;
 import com.amobee.freebee.evaluator.index.BEIndexExpressionResult;
 import com.amobee.freebee.evaluator.index.BEIndexMetrics;
 import com.amobee.freebee.evaluator.index.BEIndexResults;
 import com.amobee.freebee.evaluator.interval.Interval;
 
+import javax.annotation.Nonnull;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.annotation.Nonnull;
+import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link BEEvaluator} that uses a hybrid matching algorithm
@@ -58,7 +59,16 @@ public class BEHybridEvaluator<T> implements BEEvaluator<T>
     @Override
     public Set<T> evaluate(@Nonnull final BEInput input)
     {
-        final Set<T> evaluatorResult = new HashSet<>();
+        final BEEvaluatorResult<T> evaluatorResult = evaluateAndTrack(input);
+        return evaluatorResult.getMatchedExpressions();
+    }
+
+    @Nonnull
+    @Override
+    public BEEvaluatorResult evaluateAndTrack(@Nonnull final BEInput input)
+    {
+
+        final BEEvaluatorResult<T> evaluatorResult = new BEEvaluatorResult<>();
 
         final BEIndexResults expressionIntervals = queryIndexForMatchingExpressionIntervals(input);
 
@@ -70,7 +80,7 @@ public class BEHybridEvaluator<T> implements BEEvaluator<T>
             {
                 if (match(indexResult))
                 {
-                    evaluatorResult.add(expressionData);
+                    evaluatorResult.add(indexResult, expressionData);
                 }
             }
         });
@@ -84,17 +94,15 @@ public class BEHybridEvaluator<T> implements BEEvaluator<T>
         final BEIndexResults indexResults = this.index.findMatchingExpressionIntervals(input);
 
         // Using the matched expression intervals, evaluate partial expressions that were fully matched by the input
-        final Set<String> matchedPartialExpressionNames = new HashSet<>();
-        indexResults.getExpressionResults()
+        final List<BEIndexExpressionResult> matchedPartialExpressions = indexResults.getExpressionResults()
                 .stream()
                 .filter(BEIndexExpressionResult::isPartial)
                 .filter(this::match)
-                .map(BEIndexExpressionResult::getPartialExpressionName)
-                .forEach(matchedPartialExpressionNames::add);
+                .collect(Collectors.toList());
 
         // If any partial expressions were matched, we must now add the referenced partial expression ids to the input
         // and rerun the index query to find more intervals (for full expressions) that may now match.
-        this.index.addRefIntervalsForMatchedPartialExpressions(matchedPartialExpressionNames, indexResults);
+        this.index.addRefIntervalsForMatchedPartialExpressions(matchedPartialExpressions, indexResults);
         return indexResults;
     }
 
@@ -114,7 +122,7 @@ public class BEHybridEvaluator<T> implements BEEvaluator<T>
     private boolean matchUsingIntervals(final BEIndexExpressionResult expressionIndexResult)
     {
         // get the intervals to match, **important** they must be sorted by start index
-        final List<BEInterval> intervals = expressionIndexResult.getMatchedIntervals();
+        final List<BEMatchedInterval> intervals = expressionIndexResult.getMatchedIntervals();
         intervals.sort(Comparator.comparingInt(Interval::getStart));
 
         // create a matched array that spans all intervals across the entire expression

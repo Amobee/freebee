@@ -2,12 +2,14 @@ package com.amobee.freebee.evaluator.index;
 
 import com.amobee.freebee.config.BEDataTypeConfig;
 import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.evaluator.BEInputAttributeCategory;
 import lombok.Getter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.eclipse.collections.api.map.primitive.MutableLongObjectMap;
 import org.eclipse.collections.impl.factory.primitive.LongObjectMaps;
@@ -48,9 +50,25 @@ public class BELongIndexAttributeCategory extends BEIndexAttributeCategory imple
     }
 
     @Override
+    public void getIntervals(final byte attributeValue,
+                             @Nullable final BEInputAttributeCategory matchedInput,
+                             @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        callConsumer(this.values.get(attributeValue), matchedInput, consumer);
+    }
+
+    @Override
     public void getIntervals(final int attributeValue, @Nonnull final Consumer<List<BEInterval>> consumer)
     {
         callConsumer(this.values.get(attributeValue), consumer);
+    }
+
+    @Override
+    public void getIntervals(final int attributeValue,
+                             @Nullable final BEInputAttributeCategory matchedInput,
+                             @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        callConsumer(this.values.get(attributeValue), matchedInput, consumer);
     }
 
     @Override
@@ -60,9 +78,26 @@ public class BELongIndexAttributeCategory extends BEIndexAttributeCategory imple
     }
 
     @Override
+    public void getIntervals(final long attributeValue,
+                             @Nullable final BEInputAttributeCategory matchedInput,
+                             @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        callConsumer(this.values.get(attributeValue), matchedInput, consumer);
+    }
+
+    @Override
     public void getIntervals(@Nonnull final String attributeValue, @Nonnull final Consumer<List<BEInterval>> consumer)
     {
         callConsumer(this.values.get(Long.parseLong(attributeValue)), consumer);
+    }
+
+    @Override
+    public void getIntervals(
+            @Nonnull final String attributeValue,
+            @Nullable final BEInputAttributeCategory matchedInput,
+            @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        callConsumer(this.values.get(Long.parseLong(attributeValue)), matchedInput, consumer);
     }
 
     @Override

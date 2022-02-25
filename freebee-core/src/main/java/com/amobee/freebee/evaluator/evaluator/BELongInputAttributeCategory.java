@@ -1,30 +1,39 @@
 package com.amobee.freebee.evaluator.evaluator;
 
-import java.util.List;
-import java.util.function.Consumer;
-import javax.annotation.Nonnull;
-
+import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.index.BEAttributeCategoryMatchedIntervalConsumer;
+import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
 import com.google.common.annotations.VisibleForTesting;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.eclipse.collections.api.list.primitive.ImmutableLongList;
 import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 
-import com.amobee.freebee.evaluator.BEInterval;
-import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
+import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Michael Bond
  */
-@ToString
-@NoArgsConstructor
-public class BELongInputAttributeCategory implements BEInputAttributeCategory
+@EqualsAndHashCode(callSuper = true)
+public class BELongInputAttributeCategory extends BEBaseInputAttributeCategory
 {
     private final MutableLongList values = new LongArrayList();
 
+    public BELongInputAttributeCategory(@Nonnull final String attributeCategoryName)
+    {
+        super(attributeCategoryName);
+    }
+
+    public BELongInputAttributeCategory(@Nonnull final String attributeCategoryName, final boolean trackingEnabled)
+    {
+        super(attributeCategoryName, trackingEnabled);
+    }
+
     private BELongInputAttributeCategory(@Nonnull final BELongInputAttributeCategory category)
     {
+        super(category.getName(), category.isTrackingEnabled());
         this.values.addAll(category.values);
     }
 
@@ -42,6 +51,34 @@ public class BELongInputAttributeCategory implements BEInputAttributeCategory
     }
 
     @Override
+    public void forEachMatchedInterval(
+            @Nonnull final BEIndexAttributeCategory indexAttributeCategory,
+            @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        this.values.forEach(value -> {
+            BELongInputAttributeCategory matchedInput = null;
+            if (this.isTrackingEnabled())
+            {
+                matchedInput = new BELongInputAttributeCategory(this.getName(), true);
+                matchedInput.add(value);
+            }
+            indexAttributeCategory.getIntervals(value, matchedInput, consumer);
+        });
+    }
+
+    @Override
+    public <C extends BEInputAttributeCategory> void addAll(final C other)
+    {
+        if (!(other instanceof BELongInputAttributeCategory))
+        {
+            throw new IllegalArgumentException("Expected "
+                    + BELongInputAttributeCategory.class.getSimpleName()
+                    + " but was passed " + other.getClass().getSimpleName());
+        }
+        this.values.addAll(((BELongInputAttributeCategory) other).values);
+    }
+
+    @Override
     public BELongInputAttributeCategory clone()
     {
         return new BELongInputAttributeCategory(this);
@@ -51,5 +88,15 @@ public class BELongInputAttributeCategory implements BEInputAttributeCategory
     public ImmutableLongList getValues()
     {
         return this.values.toImmutable();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "BELongInputAttributeCategory{" +
+                "name='" + this.name + '\'' +
+                ", trackingEnabled=" + this.trackingEnabled +
+                ", values=" + this.values +
+                '}';
     }
 }

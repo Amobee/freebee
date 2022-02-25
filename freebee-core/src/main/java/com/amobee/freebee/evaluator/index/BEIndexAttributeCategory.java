@@ -1,6 +1,7 @@
 package com.amobee.freebee.evaluator.index;
 
 import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.evaluator.BEInputAttributeCategory;
 import lombok.Getter;
 
 import java.io.Serializable;
@@ -54,10 +55,40 @@ public abstract class BEIndexAttributeCategory implements Serializable
      *
      * @param attributeValue
      *         Attribute value to get intervals for.
+     * @param matchedInput
+     *         If tracking is enabled, contains the attribute category and value metadata to use for tracking matched inputs.
+     * @param consumer
+     *         Consumer to call with matched intervals.
+     */
+    public void getIntervals(final byte attributeValue, @Nullable final BEInputAttributeCategory matchedInput, @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        throw new UnsupportedOperationException("Cowardly refusal to risk loosing precision");
+    }
+
+    /**
+     * Get intervals matching the specified attribute value.
+     *
+     * @param attributeValue
+     *         Attribute value to get intervals for.
      * @param consumer
      *         Consumer to call with matched intervals.
      */
     public void getIntervals(final double attributeValue, @Nonnull final Consumer<List<BEInterval>> consumer)
+    {
+        throw new UnsupportedOperationException("Cowardly refusal to risk loosing precision");
+    }
+
+    /**
+     * Get intervals matching the specified attribute value.
+     *
+     * @param attributeValue
+     *         Attribute value to get intervals for.
+     * @param matchedInput
+     *         If tracking is enabled, contains the attribute category and value metadata to use for tracking matched inputs.
+     * @param consumer
+     *         Consumer to call with matched intervals.
+     */
+    public void getIntervals(final double attributeValue, @Nullable final BEInputAttributeCategory matchedInput, @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
     {
         throw new UnsupportedOperationException("Cowardly refusal to risk loosing precision");
     }
@@ -80,6 +111,21 @@ public abstract class BEIndexAttributeCategory implements Serializable
      *
      * @param attributeValue
      *         Attribute value to get intervals for.
+     * @param matchedInput
+     *         If tracking is enabled, contains the attribute category and value metadata to use for tracking matched inputs.
+     * @param consumer
+     *         Consumer to call with matched intervals.
+     */
+    public void getIntervals(final int attributeValue, @Nullable final BEInputAttributeCategory matchedInput, @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        throw new UnsupportedOperationException("Cowardly refusal to risk loosing precision");
+    }
+
+    /**
+     * Get intervals matching the specified attribute value.
+     *
+     * @param attributeValue
+     *         Attribute value to get intervals for.
      * @param consumer
      *         Consumer to call with matched intervals.
      */
@@ -93,10 +139,40 @@ public abstract class BEIndexAttributeCategory implements Serializable
      *
      * @param attributeValue
      *         Attribute value to get intervals for.
+     * @param matchedInput
+     *         If tracking is enabled, contains the attribute category and value metadata to use for tracking matched inputs.
+     * @param consumer
+     *         Consumer to call with matched intervals.
+     */
+    public void getIntervals(final long attributeValue, @Nullable final BEInputAttributeCategory matchedInput, @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        throw new UnsupportedOperationException("Cowardly refusal to risk loosing precision");
+    }
+
+    /**
+     * Get intervals matching the specified attribute value.
+     *
+     * @param attributeValue
+     *         Attribute value to get intervals for.
      * @param consumer
      *         Consumer to call with matching intervals.
      */
     public abstract void getIntervals(@Nonnull String attributeValue, @Nonnull Consumer<List<BEInterval>> consumer);
+
+    /**
+     * Get intervals matching the specified attribute value.
+     *
+     * @param attributeValue
+     *         Attribute value to get intervals for.
+     * @param matchedInput
+     *         If tracking is enabled, contains the attribute category and value metadata to use for tracking matched inputs.
+     * @param consumer
+     *         Consumer to call with matching intervals.
+     */
+    public abstract void getIntervals(
+            @Nonnull String attributeValue,
+            @Nullable BEInputAttributeCategory matchedInput,
+            @Nonnull BEAttributeCategoryMatchedIntervalConsumer consumer);
 
     /**
      * Minimize the amount of memory used by the index
@@ -115,6 +191,17 @@ public abstract class BEIndexAttributeCategory implements Serializable
         if (null != intervals)
         {
             consumer.accept(intervals);
+        }
+    }
+
+    protected void callConsumer(
+            @Nullable final List<BEInterval> intervals,
+            @Nullable final BEInputAttributeCategory matchedInput,
+            @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+        if (null != intervals)
+        {
+            consumer.accept(matchedInput, intervals);
         }
     }
 }

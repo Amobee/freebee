@@ -35,6 +35,7 @@ import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 public class BEBitSetEvaluator<T> implements BEEvaluator<T>
 {
     private static final long serialVersionUID = 2180648924047679090L;
+    private static final String REF_INPUT_ATTRIBUTE_CATEGORY = "REFERENCE_EXPRESSIONS";
 
     private final BEIndex index;
     private final IntObjectMap<BEInfo<?>> partialExpressions;
@@ -69,7 +70,7 @@ public class BEBitSetEvaluator<T> implements BEEvaluator<T>
     @Nonnull
     public Set<T> evaluate(@Nonnull final BEInput input)
     {
-        final BEStringInputAttributeCategory refInputAttributeCategory = new BEStringInputAttributeCategory();
+        final BEStringInputAttributeCategory refInputAttributeCategory = new BEStringInputAttributeCategory(REF_INPUT_ATTRIBUTE_CATEGORY);
         final MutableIntObjectMap<BitSet> indexResult = new IntObjectHashMap<>(this.index.getIndexMetrics().getExpressionCount());
         final Set<T> evaluatorResult = new HashSet<>();
 
@@ -111,6 +112,15 @@ public class BEBitSetEvaluator<T> implements BEEvaluator<T>
         });
 
         return evaluatorResult;
+    }
+
+    @Nonnull
+    @Override
+    public BEEvaluatorResult<T> evaluateAndTrack(@Nonnull final BEInput input)
+    {
+        throw new UnsupportedOperationException(
+                "This feature is not implemented in by the deprecated BitSetEvaluator. " +
+                        "Please migrate to the BEHybridEvaluator.");
     }
 
     @Override

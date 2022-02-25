@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.amobee.freebee.evaluator.BEInterval;
+import com.amobee.freebee.evaluator.evaluator.BEInputAttributeCategory;
 import com.amobee.freebee.util.trie.BitTrie;
 import com.amobee.freebee.util.trie.ReverseStringBitKeyAnalyzer;
 import com.amobee.freebee.util.trie.StringBitKeyAnalyzer;
@@ -45,6 +47,16 @@ public class BEPartialStringIndexAttributeCategory extends BEAbstractStringIndex
     public void getIntervals(@Nonnull final String attributeValue, @Nonnull final Consumer<List<BEInterval>> consumer)
     {
         this.values.getAll(getValue(attributeValue), entry -> consumer.accept(entry.getValue()));
+    }
+
+    @Override
+    public void getIntervals(
+            @Nonnull final String attributeValue,
+            @Nullable final BEInputAttributeCategory matchedInput,
+            @Nonnull final BEAttributeCategoryMatchedIntervalConsumer consumer)
+    {
+
+        this.values.getAll(getValue(attributeValue), entry -> consumer.accept(matchedInput, entry.getValue()));
     }
 
     public Trie<String, List<BEInterval>> getValues()

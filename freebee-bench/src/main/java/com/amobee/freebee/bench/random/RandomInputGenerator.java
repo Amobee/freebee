@@ -3,6 +3,7 @@ package com.amobee.freebee.bench.random;
 import com.amobee.freebee.bench.DataTypeConfigurer;
 import com.amobee.freebee.bench.DataValueProvider;
 import com.amobee.freebee.bench.InputGenerator;
+import com.amobee.freebee.bench.range.Range;
 import com.amobee.freebee.config.BEDataTypeConfig;
 import com.amobee.freebee.evaluator.evaluator.BEByteInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BEDoubleInputAttributeCategory;
@@ -10,7 +11,6 @@ import com.amobee.freebee.evaluator.evaluator.BEInput;
 import com.amobee.freebee.evaluator.evaluator.BEIntInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BELongInputAttributeCategory;
 import com.amobee.freebee.evaluator.evaluator.BEStringInputAttributeCategory;
-import com.amobee.freebee.bench.range.Range;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,6 +28,7 @@ public class RandomInputGenerator implements InputGenerator
     private final Random random;
     private final int maxCategories;
     private final int maxValues;
+    private final boolean inputTrackingEnabled;
 
     public RandomInputGenerator(
             final RandomBenchmarkConfigurationProperties properties,
@@ -37,6 +38,7 @@ public class RandomInputGenerator implements InputGenerator
         this.dataTypeConfigurer = dataValueProvider.getDataTypeConfigurer();
 
         this.random = properties.getRandomSeed() != null ? new Random(properties.getRandomSeed()) : new Random();
+        this.inputTrackingEnabled = properties.isInputTrackingEnabled();
         this.maxValues = properties.getMaxInputValues();
         // TODO allow these values to be configured externally
         this.maxCategories = DEFAULT_MAX_CATEGORIES;
@@ -88,22 +90,31 @@ public class RandomInputGenerator implements InputGenerator
             {
                 case BYTE:
                     // TODO decide on string encoding for bytes and decode strings provided from file here
-                    final BEByteInputAttributeCategory inputCategory = input.getOrCreateByteCategory(category);
+                    final BEByteInputAttributeCategory byteInputCategory = input.getOrCreateByteCategory(category);
+                    byteInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
                     throw new IllegalStateException("Byte data types are not yet supported");
                 case DOUBLE:
                     final BEDoubleInputAttributeCategory doubleInputCategory = input.getOrCreateDoubleCategory(category);
+                    doubleInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
                     values.forEach(value -> doubleInputCategory.add(Double.valueOf(value)));
                     break;
                 case INT:
                     final BEIntInputAttributeCategory intInputCategory = input.getOrCreateIntCategory(category);
+                    intInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
                     values.forEach(value -> intInputCategory.add(Integer.valueOf(value)));
                     break;
                 case LONG:
                     final BELongInputAttributeCategory longInputCategory = input.getOrCreateLongCategory(category);
-                    values.forEach(value -> longInputCategory.add(Integer.valueOf(value)));
+                    longInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
+                    values.forEach(value -> longInputCategory.add(Long.valueOf(value)));
                     break;
                 case STRING:
                     final BEStringInputAttributeCategory stringInputCategory = input.getOrCreateStringCategory(category);
+                    stringInputCategory.setTrackingEnabled(this.inputTrackingEnabled);
+                    if ("domain".equalsIgnoreCase(category))
+                    {
+                        stringInputCategory.setTrackingEnabled(true);
+                    }
                     values.forEach(stringInputCategory::add);
                     break;
                 default:

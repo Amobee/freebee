@@ -61,17 +61,26 @@ public class BEEvaluatorResult<T>
      */
     public Set<List<BEInputAttributeCategory>> getPossibleInputValuesThatSatisfy(final T expressionData)
     {
+        return getPossibleInputValuesThatSatisfy(expressionData, new DefaultFormatter());
+    }
+
+    /**
+     * Returns the possible combinations of input values that could satisfy a given expression.
+     *
+     * This variant of {@link #getPossibleInputValuesThatSatisfy(Object)} allows the caller to specify the result
+     * format.
+     */
+    public <F> F getPossibleInputValuesThatSatisfy(
+            final T expressionData,
+            final PossibleValueFormatter<F> formatter)
+    {
         if (expressionData == null)
         {
             return null;
         }
 
         final BEIndexExpressionResult indexExpressionResult = this.matchedExpressionIntervals.get(expressionData);
-        return getPossibleInputValuesThatSatisfy(indexExpressionResult);
-    }
 
-    private Set<List<BEInputAttributeCategory>> getPossibleInputValuesThatSatisfy(final BEIndexExpressionResult indexExpressionResult)
-    {
         if (indexExpressionResult == null)
         {
             return null;
@@ -88,7 +97,6 @@ public class BEEvaluatorResult<T>
             possibleCompleteIntervalPathsFlattened.addAll(replacePartialExpressionRefsWithIntervalPaths(pathOfIntervals));
         }
 
-        final Set<List<BEInputAttributeCategory>> matchedInputValues = new LinkedHashSet<>(possibleCompleteIntervalPathsFlattened.size());
         for (final List<BEMatchedInterval> pathOfIntervals : possibleCompleteIntervalPathsFlattened)
         {
             // Each path will result in a List<? extends BEInputAttributeCategory> where each element in
@@ -98,13 +106,16 @@ public class BEEvaluatorResult<T>
                             .map(BEMatchedInterval::getMatchedInputValues)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-            // Add the list of possible values that satisfy the current path to the
-            // set representing all possible paths. We use a set so that duplicate lists
-            // (e.g., an empty list) only occur once in the overall result.
-            matchedInputValues.add(possibleValuesToSatisfyThisPath);
+            // Add the list of possible values that satisfy the current path
+            formatter.add(possibleValuesToSatisfyThisPath);
+
+            if (formatter.isDone())
+            {
+                break;
+            }
         }
 
-        return matchedInputValues;
+        return formatter.getResult();
     }
 
     @Nonnull
@@ -212,5 +223,107 @@ public class BEEvaluatorResult<T>
         }
         return updatedFlattenedPaths;
     }
+
+    /**
+     * An interface for customizing the results of {@link BEEvaluatorResult#getPossibleInputValuesThatSatisfy(Object, PossibleValueFormatter)}.
+     *
+     * @param <F> The output type produced by this formatter.
+     */
+    public interface PossibleValueFormatter<F>
+    {
+        /** Take a list that represents an "AND of ORs" of possible input values to satisfy a single path,
+         *  and add them to the result set.
+         */
+        void add(List<BEInputAttributeCategory> possibleValues);
+
+        /**
+         * @return If the formatter would like to stop evaluation before all possible combinations of values are considered
+         */
+        boolean isDone();
+
+        /**
+         * Return the result
+         */
+        F getResult();
+    }
+
+    public static class DefaultFormatter implements PossibleValueFormatter<Set<List<BEInputAttributeCategory>>>
+    {
+        private final Set<List<BEInputAttributeCategory>> matchedInputValues = new LinkedHashSet<>();
+
+        @Override
+        public void add(final List<BEInputAttributeCategory> possibleValues)
+        {
+            this.matchedInputValues.add(possibleValues);
+        }
+
+        @Override
+        public boolean isDone()
+        {
+            return false;
+        }
+
+        @Override
+        public Set<List<BEInputAttributeCategory>> getResult()
+        {
+            return this.matchedInputValues;
+        }
+    }
+
+    /**
+     * Expands and flattens AND of ORs into OR of ANDs, and uses single-value input categories
+     */
+    public static class AllPossiblePermutationsFormatter implements PossibleValueFormatter<Set<Set<BEInputAttributeCategory>>>
+    {
+        private final Set<Set<BEInputAttributeCategory>> result = new HashSet<>();
+
+        @Override
+        public void add(final List<BEInputAttributeCategory> possibleValues)
+        {
+            final List<List<BEInputAttributeCategory>> singleValueSets = new ArrayList<>();
+            possibleValues.forEach(multiValueAttributeCategory -> singleValueSets.add(new ArrayList<>(multiValueAttributeCategory.split())));
+
+            generatePermutations(
+                    singleValueSets,
+                    this.result,
+                    0,
+                    new HashSet<>()
+            );
+        }
+
+        @Override
+        public boolean isDone()
+        {
+            return false;
+        }
+
+        @Override
+        public Set<Set<BEInputAttributeCategory>> getResult()
+        {
+            return this.result;
+        }
+
+        void generatePermutations(
+                final List<List<BEInputAttributeCategory>> inputLists,
+                final Set<Set<BEInputAttributeCategory>> result,
+                final int currentIndex,
+                final Set<BEInputAttributeCategory> current)
+        {
+            if (currentIndex == inputLists.size())
+            {
+                result.add(current);
+                return;
+            }
+
+            for (int i = 0; i < inputLists.get(currentIndex).size(); i++)
+            {
+                final HashSet<BEInputAttributeCategory> newPermutation = new HashSet<>(current);
+                newPermutation.add(inputLists.get(currentIndex).get(i));
+                generatePermutations(inputLists, result, currentIndex + 1, newPermutation);
+            }
+        }
+
+    }
+
 
 }

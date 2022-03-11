@@ -94,20 +94,6 @@
             <property name="classes" value="java.lang.Boolean"/>
         </module>
         <module name="InnerAssignment"/>
-        <module name="IllegalTypeCheck">
-            <property name="illegalClassNames" value="java.util.ArrayList,
-                                                      java.util.EnumMap,
-                                                      java.util.EnumSet,
-                                                      java.util.HashSet,
-                                                      java.util.HashMap,
-                                                      java.util.LinkedHashMap,
-                                                      java.util.LinkedHashSet,
-                                                      java.util.LinkedList,
-                                                      java.util.TreeSet,
-                                                      java.util.TreeMap,
-                                                      java.util.Vector,
-                                                      java.util.WeakHashMap"/>
-        </module>
         
         <!--module name="MagicNumber"/-->
         <module name="MissingSwitchDefault"/>

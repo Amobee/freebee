@@ -10,7 +10,9 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import javax.annotation.Nonnull;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -88,6 +90,18 @@ public class BEIntInputAttributeCategory extends BEBaseInputAttributeCategory
     public ImmutableIntList getValues()
     {
         return this.values.toImmutable();
+    }
+
+    @Override
+    public Set<? extends BEInputAttributeCategory> split()
+    {
+        final Set<BEIntInputAttributeCategory> outputSet = new HashSet<>();
+        this.values.forEach(value -> {
+            final BEIntInputAttributeCategory i = new BEIntInputAttributeCategory(this.name, this.trackingEnabled);
+            i.add(value);
+            outputSet.add(i);
+        });
+        return outputSet;
     }
 
     @Override

@@ -10,7 +10,9 @@ import org.eclipse.collections.api.list.primitive.MutableLongList;
 import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 
 import javax.annotation.Nonnull;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -88,6 +90,18 @@ public class BELongInputAttributeCategory extends BEBaseInputAttributeCategory
     public ImmutableLongList getValues()
     {
         return this.values.toImmutable();
+    }
+
+    @Override
+    public Set<? extends BEInputAttributeCategory> split()
+    {
+        final Set<BELongInputAttributeCategory> outputSet = new HashSet<>();
+        this.values.forEach(value -> {
+            final BELongInputAttributeCategory i = new BELongInputAttributeCategory(this.name, this.trackingEnabled);
+            i.add(value);
+            outputSet.add(i);
+        });
+        return outputSet;
     }
 
     @Override

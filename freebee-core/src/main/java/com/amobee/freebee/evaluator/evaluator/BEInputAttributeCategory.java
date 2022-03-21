@@ -6,6 +6,7 @@ import com.amobee.freebee.evaluator.index.BEIndexAttributeCategory;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -41,4 +42,6 @@ public interface BEInputAttributeCategory extends Cloneable
     <C extends BEInputAttributeCategory> void addAll(C other);
 
     BEInputAttributeCategory clone();
+
+    Set<? extends BEInputAttributeCategory> split();
 }

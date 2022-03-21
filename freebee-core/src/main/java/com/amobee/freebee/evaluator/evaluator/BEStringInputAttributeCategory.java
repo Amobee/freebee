@@ -9,7 +9,9 @@ import lombok.EqualsAndHashCode;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -87,6 +89,18 @@ public class BEStringInputAttributeCategory extends BEBaseInputAttributeCategory
     public ImmutableList<String> getValues()
     {
         return ImmutableList.copyOf(this.values);
+    }
+
+    @Override
+    public Set<? extends BEInputAttributeCategory> split()
+    {
+        final Set<BEStringInputAttributeCategory> outputSet = new HashSet<>();
+        this.values.forEach(value -> {
+            final BEStringInputAttributeCategory i = new BEStringInputAttributeCategory(this.name, this.trackingEnabled);
+            i.add(value);
+            outputSet.add(i);
+        });
+        return outputSet;
     }
 
     @Override
